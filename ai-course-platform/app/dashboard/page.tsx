@@ -5,6 +5,7 @@ import FileUpload from '@/components/FileUpload'
 import CourseList from '@/components/CourseList'
 import { LogOut, BookOpen } from 'lucide-react'
 import ThemeToggle from '@/components/ThemeToggle'
+import SessionTimeout from '@/components/SessionTimeout'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -15,8 +16,8 @@ export default async function DashboardPage() {
   const { data: courses } = await supabase.from('courses').select('*').eq('user_id', user.id).order('created_at', { ascending: false })
 
   return (
-    // ✨ NEW: Beautiful subtle gradient background for Light Mode!
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-violet-50 dark:from-slate-950 dark:via-slate-950 dark:to-slate-950 font-sans transition-colors duration-300">
+      <SessionTimeout />
       
       {/* ✨ NEW: Ultra-clean frosted glass navbar */}
       <nav className="sticky top-0 z-50 w-full bg-white/60 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-800 transition-colors">
