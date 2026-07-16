@@ -15,15 +15,12 @@ export default function FileUpload({ userId }: { userId: string }) {
 
   const handleUpload = async () => {
     if (!file) return
-    // Validate file type (must be PDF or Word)
+    // Validate file type (must be PDF)
     if (
-      file.type !== 'application/pdf' &&
-      file.type !== 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' &&
-      !file.name.toLowerCase().endsWith('.pdf') &&
-      !file.name.toLowerCase().endsWith('.docx') &&
-      !file.name.toLowerCase().endsWith('.doc')
+      file.type !== 'application/pdf' ||
+      !file.name.toLowerCase().endsWith('.pdf')
     ) {
-      window.alert('Please upload PDF or Word files only.')
+      window.alert('Please upload PDF files only.')
       return
     }
     setLoading(true)
@@ -115,7 +112,7 @@ export default function FileUpload({ userId }: { userId: string }) {
           <div className={`group flex flex-col items-center justify-center border-2 border-dashed rounded-2xl p-8 transition-all duration-300 relative cursor-pointer
             ${file ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-500/10 dark:border-indigo-400' : 'border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-indigo-400 dark:hover:border-indigo-500'}`}>
             <input 
-            type="file" accept=".pdf,.doc,.docx" onChange={(e) => setFile(e.target.files?.[0] || null)}
+            type="file" accept=".pdf" onChange={(e) => setFile(e.target.files?.[0] || null)}
             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" disabled={loading}
           />
             

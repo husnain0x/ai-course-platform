@@ -29,67 +29,41 @@ def read_root():
 
 @app.post("/api/generate-course")
 async def generate_course(file: UploadFile = File(...)):
-    if not (file.filename.lower().endswith('.pdf') or file.filename.lower().endswith('.docx') or file.filename.lower().endswith('.doc')):
-        raise HTTPException(status_code=400, detail='Only PDF, DOCX, or DOC files are allowed.')
-    
+    # 1. Validate extension (PDF or DOCX only)
+    extension = file.filename.split('.')[-1].lower()
+    if extension not in ["pdf", "docx"]:
+        raise HTTPException(status_code=400, detail="Only PDF and DOCX allowed.")
+
     try:
+        extracted_text = ""
         file_bytes = await file.read()
-        # Determine file type and extract text
-        if file.filename.lower().endswith('.pdf'):
-            doc = fitz.open(stream=file_bytes, filetype='pdf')
-            extracted_text = ''
+
+        if extension == "pdf":
+            doc = fitz.open(stream=file_bytes, filetype="pdf")
             for page in doc:
                 extracted_text += page.get_text()
-                if len(extracted_text) > 80000:
+                # 🛑 SAFETY RAIL 1: Limit to ~40k characters
+                if len(extracted_text) > 40000:
                     break
-        elif file.filename.lower().endswith('.docx'):
+        elif extension == "docx":
             import io
             from docx import Document
             document = Document(io.BytesIO(file_bytes))
-            extracted_text = '\n'.join([para.text for para in document.paragraphs])
-            if len(extracted_text) > 80000:
-                extracted_text = extracted_text[:80000]
-        elif file.filename.lower().endswith('.doc'):
-            # Pure Python extraction for legacy .doc binary format (OLE compound document)
-            # Find printable character sequences to extract the text content
-            try:
-                import re
-                
-                # Try UTF-16-LE first (common for Word docs)
-                utf16_text = file_bytes.decode('utf-16le', errors='ignore')
-                # Keep lines with mostly printable characters and some minimum length
-                utf16_paras = []
-                for line in re.split(r'[\r\n\x00]+', utf16_text):
-                    cleaned = "".join(c for c in line if c.isprintable())
-                    cleaned = re.sub(r'\s+', ' ', cleaned).strip()
-                    # Filter out binary metadata noise (e.g. font names, author info)
-                    if len(cleaned) > 20 and not cleaned.startswith(('Normal', 'Microsoft', 'Times New', 'Calibri', 'Arial')):
-                        utf16_paras.append(cleaned)
-                
-                extracted_text = '\n'.join(utf16_paras)
-                
-                # If we got very little text, fallback to latin-1
-                if len(extracted_text) < 100:
-                    latin_text = file_bytes.decode('latin-1', errors='ignore')
-                    latin_paras = []
-                    for line in re.split(r'[\r\n\x00\x01-\x1f\x7f-\x9f]+', latin_text):
-                        cleaned = "".join(c for c in line if c.isprintable())
-                        cleaned = re.sub(r'\s+', ' ', cleaned).strip()
-                        if len(cleaned) > 20 and not cleaned.startswith(('Normal', 'Microsoft', 'Times New', 'Calibri', 'Arial')):
-                            latin_paras.append(cleaned)
-                    extracted_text = '\n'.join(latin_paras)
-                
-                # Truncate if too long
-                if len(extracted_text) > 80000:
-                    extracted_text = extracted_text[:80000]
-            except Exception as e:
-                raise HTTPException(status_code=500, detail=f'Legacy doc extraction failed: {e}')
-        else:
-            raise HTTPException(status_code=400, detail='Unsupported file type.')        
-        # 2. SPEED PROMPT: We use Llama 3.1 8B which is nearly instant
+            for para in document.paragraphs:
+                extracted_text += para.text + "\n"
+                if len(extracted_text) > 40000:
+                    break
+
+        # 🛑 SAFETY RAIL 2: Strict output limiter in the prompt
         prompt = f"""
-        Create a detailed E-Course from this text. 
+        Extract core knowledge from this text and convert it into a structured E‑Course.
         Return ONLY valid JSON.
+        
+        STRICT RULES:
+        1. Max 5 chapters.
+        2. Max 3 lessons per chapter.
+        3. Keep lesson content to exactly 2‑3 detailed paragraphs.
+        
         Structure:
         {{
           "course_title": "...",
@@ -100,41 +74,47 @@ async def generate_course(file: UploadFile = File(...)):
             {{
               "chapter_title": "...",
               "lessons": [
-                {{
-                  "lesson_title": "...",
-                  "content": "A 200-word detailed explanation in Markdown."
-                }}
+                {{ "lesson_title": "...", "content": "..." }}
               ]
             }}
           ]
         }}
         
-        Limit to 4 chapters, 3 lessons each for maximum speed.
         Text: {extracted_text}
         """
-        
-        # 3. Use the "Instant" model for speed
+
         response = groq_client.chat.completions.create(
             messages=[{"role": "user", "content": prompt}],
-            model="llama-3.1-8b-instant", # <--- Switching to the High Speed model
+            model="llama-3.1-8b-instant",
             temperature=0.2,
+            max_tokens=3000,
         )
-        
+
         ai_response = response.choices[0].message.content
-        
+
+        # 🛑 SAFETY RAIL 3: Advanced JSON cleaning
         cleaned_response = ai_response.strip()
-        if cleaned_response.startswith("```json"):
-            cleaned_response = cleaned_response[7:-3]
-        elif cleaned_response.startswith("```"):
-            cleaned_response = cleaned_response[3:-3]
-            
-        course_data = json.loads(cleaned_response)
+        if "```json" in cleaned_response:
+            cleaned_response = cleaned_response.split("```json")[1].split("```")[0]
+        elif "```" in cleaned_response:
+            cleaned_response = cleaned_response.split("```")[1].split("```")[0]
         
+        try:
+            course_data = json.loads(cleaned_response)
+        except json.JSONDecodeError:
+            # Simple fallback: try to close brackets if missing
+            if not cleaned_response.endswith(']}}'):
+                if cleaned_response.endswith('}'):  # likely missing closing brackets
+                    cleaned_response += ']}'
+                else:
+                    cleaned_response += '}]}'
+            course_data = json.loads(cleaned_response)
+
         return {"message": "Success", "data": course_data}
-    
+
     except Exception as e:
         print(f"Error: {e}")
-        raise HTTPException(status_code=500, detail="Generation failed.")
+        raise HTTPException(status_code=500, detail="Generation failed. Try a smaller section of the document.")
 
 
 class ChatRequest(BaseModel):
