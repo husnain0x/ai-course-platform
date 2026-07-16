@@ -17,7 +17,7 @@ groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 # Allow Frontend to communicate with Backend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "https://ai-course-platform-jsxhej1g2-70177810-1749s-projects.vercel.app", "https://ai-course-platform-70177810-1749s-projects.vercel.app"], 
+    allow_origins=["http://localhost:3000", "https://ai-course-platform-jsxhej1g2-70177810-1749s-projects.vercel.app", "https://ai-course-platform-70177810-1749s-projects.vercel.app", "https://ai-course-platform-olive.vercel.app"], 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
