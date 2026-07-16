@@ -38,7 +38,7 @@ export default function CourseList({ initialCourses }: { initialCourses: any[] }
       {filteredCourses.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredCourses.map((course) => (
-            <Link href={`/course/${course.id}`} key={course.id} className="group flex flex-col h-full bg-white/80 dark:bg-slate-900 backdrop-blur-sm rounded-3xl border border-slate-200/60 dark:border-slate-800 overflow-hidden hover:shadow-[0_8px_30px_rgb(6,81,237,0.08)] dark:hover:shadow-[0_8px_30px_rgb(0,0,0,0.4)] hover:-translate-y-1 transition-all duration-300">
+              <Link href={`/course/${course.id}`} key={course.id} className="relative z-10 group flex flex-col h-full bg-white/80 dark:bg-slate-900 backdrop-blur-sm rounded-3xl border border-slate-200/60 dark:border-slate-800 overflow-hidden hover:shadow-[0_8px_30px_rgb(6,81,237,0.08)] dark:hover:shadow-[0_8px_30px_rgb(0,0,0,0.4)] hover:-translate-y-1 transition-all duration-300 cursor-pointer">>
               
               {/* ✨ NEW: A beautiful colorful header for each card */}
               <div className="h-32 bg-gradient-to-br from-blue-500/10 to-violet-500/10 dark:from-slate-800 dark:to-slate-900 relative overflow-hidden flex items-center justify-center border-b border-slate-100 dark:border-slate-800">
