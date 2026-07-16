@@ -5,6 +5,7 @@ from pydantic import BaseModel
 import os
 import fitz  # PyMuPDF for reading PDFs
 import json
+import re
 from groq import Groq
 from dotenv import load_dotenv
 
@@ -32,7 +33,7 @@ async def generate_course(file: UploadFile = File(...)):
     # 1. Validate extension (PDF or DOCX only)
     extension = file.filename.split('.')[-1].lower()
     if extension not in ["pdf", "docx"]:
-        raise HTTPException(status_code=400, detail="Only PDF and DOCX allowed.")
+        raise HTTPException(status_code=400, detail="Unsupported file type.")
 
     try:
         extracted_text = ""
@@ -42,8 +43,8 @@ async def generate_course(file: UploadFile = File(...)):
             doc = fitz.open(stream=file_bytes, filetype="pdf")
             for page in doc:
                 extracted_text += page.get_text()
-                # 🛑 SAFETY RAIL 1: Limit to ~40k characters
-                if len(extracted_text) > 40000:
+                # 🛑 SAFETY RAIL 1: Limit to ~30k characters for speed
+                if len(extracted_text) > 30000:
                     break
         elif extension == "docx":
             import io
@@ -51,70 +52,61 @@ async def generate_course(file: UploadFile = File(...)):
             document = Document(io.BytesIO(file_bytes))
             for para in document.paragraphs:
                 extracted_text += para.text + "\n"
-                if len(extracted_text) > 40000:
+                if len(extracted_text) > 30000:
                     break
 
-        # 🛑 SAFETY RAIL 2: Strict output limiter in the prompt
+        if not extracted_text.strip():
+            raise HTTPException(status_code=400, detail="File is empty or unreadable.")
+
+        # 🛑 SAFETY RAIL 2: Rigid prompt to stay within timeout
         prompt = f"""
-        Extract core knowledge from this text and convert it into a structured E‑Course.
-        Return ONLY valid JSON.
+        ACT AS A DATA GENERATOR. CONVERT TEXT TO JSON.
+        RULES:
+        - NO INTRO. NO OUTRO. ONLY JSON.
+        - MAX 3 CHAPTERS.
+        - MAX 2 LESSONS PER CHAPTER.
+        - LESSON CONTENT: 150 WORDS MAX.
         
-        STRICT RULES:
-        1. Max 5 chapters.
-        2. Max 3 lessons per chapter.
-        3. Keep lesson content to exactly 2‑3 detailed paragraphs.
-        
-        Structure:
+        STRUCTURE:
         {{
           "course_title": "...",
           "description": "...",
           "estimated_time": "...",
           "difficulty_level": "...",
           "chapters": [
-            {{
-              "chapter_title": "...",
-              "lessons": [
-                {{ "lesson_title": "...", "content": "..." }}
-              ]
-            }}
+            {{ "chapter_title": "...", "lessons": [ {{ "lesson_title": "...", "content": "..." }} ] }}
           ]
         }}
-        
-        Text: {extracted_text}
+        TEXT: {extracted_text[:25000]}
         """
 
         response = groq_client.chat.completions.create(
             messages=[{"role": "user", "content": prompt}],
             model="llama-3.1-8b-instant",
-            temperature=0.2,
-            max_tokens=3000,
+            temperature=0.1,
+            max_tokens=2000,
         )
 
-        ai_response = response.choices[0].message.content
+        raw_content = response.choices[0].message.content
 
-        # 🛑 SAFETY RAIL 3: Advanced JSON cleaning
-        cleaned_response = ai_response.strip()
-        if "```json" in cleaned_response:
-            cleaned_response = cleaned_response.split("```json")[1].split("```")[0]
-        elif "```" in cleaned_response:
-            cleaned_response = cleaned_response.split("```")[1].split("```")[0]
-        
+        # 🧠 REPAIR ENGINE: Regex to extract JSON block
         try:
-            course_data = json.loads(cleaned_response)
-        except json.JSONDecodeError:
-            # Simple fallback: try to close brackets if missing
-            if not cleaned_response.endswith(']}}'):
-                if cleaned_response.endswith('}'):  # likely missing closing brackets
-                    cleaned_response += ']}'
-                else:
-                    cleaned_response += '}]}'
-            course_data = json.loads(cleaned_response)
+            json_match = re.search(r"\{.*\}", raw_content, re.DOTALL)
+            if json_match:
+                cleaned_json = json_match.group(0)
+                course_data = json.loads(cleaned_json)
+            else:
+                raise ValueError("No JSON found in response")
+        except Exception as e:
+            print(f"JSON Error: {raw_content}")
+            raise HTTPException(status_code=500, detail="AI returned bad formatting. Try again.")
 
         return {"message": "Success", "data": course_data}
-
     except Exception as e:
-        print(f"Error: {e}")
-        raise HTTPException(status_code=500, detail="Generation failed. Try a smaller section of the document.")
+        # Forward actual error to frontend for debugging
+        error_msg = str(e)
+        print(f"General Error: {error_msg}")
+        raise HTTPException(status_code=500, detail=error_msg)
 
 
 class ChatRequest(BaseModel):

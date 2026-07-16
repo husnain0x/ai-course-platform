@@ -36,7 +36,10 @@ export default function FileUpload({ userId }: { userId: string }) {
         body: formData,
       })
 
-      if (!response.ok) throw new Error('Failed to generate course')
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.detail || 'Server Error')
+      }
       const { data: courseData } = await response.json()
       
       // 2. DUPLICATE CHECK! Check if user already has a course with this title
