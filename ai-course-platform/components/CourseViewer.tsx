@@ -94,7 +94,7 @@ export default function CourseViewer({ course, chapters, userId }: any) {
     setIsChatting(true)
     try {
       await supabase.from('chat_history').insert({ user_id: userId, lesson_id: activeLesson.id, role: 'user', content: userMsg.content })
-      const response = await fetch('https://ai-course-platform-it0p.onrender.com/api/chat', {
+      const response = await fetch('https://ai-course-platform-i10p.onrender.com/api/chat', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages: [...chatHistory, userMsg], context: activeLesson.content }),
       })

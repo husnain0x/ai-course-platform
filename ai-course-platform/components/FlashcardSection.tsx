@@ -13,7 +13,7 @@ export default function FlashcardSection({ lessonContent }: { lessonContent: str
   const generateFlashcards = async () => {
     setLoading(true)
     try {
-      const response = await fetch('https://ai-course-platform-it0p.onrender.com/api/generate-flashcards', {
+      const response = await fetch('https://ai-course-platform-i10p.onrender.com/api/generate-flashcards', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ context: lessonContent }),
       })
