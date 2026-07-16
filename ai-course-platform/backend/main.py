@@ -33,33 +33,21 @@ async def generate_course(file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail="Only PDF files are allowed.")
     
     try:
-        # 1. Read the PDF File
         file_bytes = await file.read()
         doc = fitz.open(stream=file_bytes, filetype="pdf")
         
-        # 2. Extract massive context (Up to ~150,000 characters / 50 pages)
+        # 1. Limit extraction for speed (Reading first 20-30 pages is plenty for a course structure)
         extracted_text = ""
         for page in doc:
             extracted_text += page.get_text()
-            if len(extracted_text) > 150000: 
+            if len(extracted_text) > 80000: 
                 break
         
-        if not extracted_text.strip():
-            raise HTTPException(status_code=400, detail="Could not extract text from this PDF.")
-
-        # 3. The "Master Professor" Prompt
+        # 2. SPEED PROMPT: We use Llama 3.1 8B which is nearly instant
         prompt = f"""
-        You are a world-class university professor. Your task is to extract all the core knowledge from the provided text and turn it into a HIGHLY DETAILED, COMPREHENSIVE e-course.
-        Do not skip important concepts. The course must be thorough, highly educational, and well-structured.
-        
-        CRITICAL INSTRUCTIONS:
-        - Create between 4 to 8 Chapters based on the text.
-        - Create 3 to 5 Lessons per chapter.
-        - The 'content' of each lesson MUST be detailed and comprehensive. 
-        - Use rich Markdown in the content: Use headings (###), bullet points, bold text for key terms, and create real-world examples to explain complex topics.
-        - You MUST return ONLY a valid JSON object. No markdown blocks like ```json.
-        
-        Use this EXACT JSON structure:
+        Create a detailed E-Course from this text. 
+        Return ONLY valid JSON.
+        Structure:
         {{
           "course_title": "...",
           "description": "...",
@@ -71,45 +59,40 @@ async def generate_course(file: UploadFile = File(...)):
               "lessons": [
                 {{
                   "lesson_title": "...",
-                  "content": "Detailed, rich markdown content goes here..."
+                  "content": "A 200-word detailed explanation in Markdown."
                 }}
               ]
             }}
           ]
         }}
         
-        Source Text:
-        {extracted_text}
+        Limit to 4 chapters, 3 lessons each for maximum speed.
+        Text: {extracted_text}
         """
-
-        # 4. Call Groq AI (Using their Flagship 70B Model!)
+        
+        # 3. Use the "Instant" model for speed
         response = groq_client.chat.completions.create(
             messages=[{"role": "user", "content": prompt}],
-            model="llama-3.3-70b-versatile", # Groq's most intelligent model
-            temperature=0.4, # slightly higher for more creative/rich explanations
+            model="llama-3.1-8b-instant", # <--- Switching to the High Speed model
+            temperature=0.2,
         )
-
+        
         ai_response = response.choices[0].message.content
         
-        # 5. Safely clean and parse the JSON
-        try:
-            cleaned_response = ai_response.strip()
-            if cleaned_response.startswith("```json"):
-                cleaned_response = cleaned_response[7:-3]
-            elif cleaned_response.startswith("```"):
-                cleaned_response = cleaned_response[3:-3]
-                
-            course_data = json.loads(cleaned_response)
-        except json.JSONDecodeError:
-            raise HTTPException(status_code=500, detail="The AI generated too much detail and got cut off. Please try a slightly smaller PDF.")
+        cleaned_response = ai_response.strip()
+        if cleaned_response.startswith("```json"):
+            cleaned_response = cleaned_response[7:-3]
+        elif cleaned_response.startswith("```"):
+            cleaned_response = cleaned_response[3:-3]
+            
+        course_data = json.loads(cleaned_response)
         
-        return {
-            "message": "Course generated successfully!",
-            "data": course_data
-        }
-
+        return {"message": "Success", "data": course_data}
+    
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error generating course: {str(e)}")
+        print(f"Error: {e}")
+        raise HTTPException(status_code=500, detail="Generation failed.")
+
 
 class ChatRequest(BaseModel):
     messages: list

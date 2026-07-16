@@ -125,14 +125,19 @@ export default function FileUpload({ userId }: { userId: string }) {
             )}
           </div>
 
-          {file && (
-            <button 
-              onClick={handleUpload} disabled={loading}
-              className="mt-4 w-full flex items-center justify-center gap-2 bg-slate-900 dark:bg-indigo-600 text-white py-3.5 rounded-xl hover:bg-indigo-600 dark:hover:bg-indigo-500 transition-all duration-300 disabled:opacity-70 shadow-lg"
-            >
-              {loading ? <><Loader2 className="w-5 h-5 animate-spin" /> {status}</> : '✨ Generate Course Now'}
-            </button>
-          )}
+          {loading ? (
+          <div className="mt-4 p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl border border-indigo-100 dark:border-indigo-800 animate-pulse">
+            <div className="flex items-center gap-3 text-indigo-600 dark:text-indigo-400 font-bold">
+              <Loader2 className="w-5 h-5 animate-spin" />
+              <span>{status}</span>
+            </div>
+          </div>
+        ) : file ? (
+          <button onClick={handleUpload} disabled={loading}
+            className="mt-4 w-full flex items-center justify-center gap-2 bg-slate-900 dark:bg-indigo-600 text-white py-3.5 rounded-xl hover:bg-indigo-600 dark:hover:bg-indigo-500 transition-all duration-300 disabled:opacity-70 shadow-lg">
+            ✨ Generate Course Now
+          </button>
+        ) : null}
         </div>
       </div>
     </div>
