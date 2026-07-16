@@ -65,7 +65,7 @@ async def generate_course(file: UploadFile = File(...)):
         - NO INTRO. NO OUTRO. ONLY JSON.
         - GENERATE BETWEEN 3 TO 4 CHAPTERS.
         - MAX 3 LESSONS PER CHAPTER.
-        - LESSON CONTENT: 150-200 WORDS. ADD RICH CONTEXT, DETAILED EXPLANATIONS, AND PROPER FORMATION (Markdown bullet points allowed inside content).
+        - LESSON CONTENT: MUST BE HIGHLY DETAILED AND COMPREHENSIVE. EACH LESSON MUST HAVE AT LEAST 7 TO 8 LINES OR BULLET POINTS. ADD RICH CONTEXT AND DETAILED EXPLANATIONS. (Use Markdown formatting like bullet points `*` or bold `**text**` inside the content).
         
         STRUCTURE:
         {{
