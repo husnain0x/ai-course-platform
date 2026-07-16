@@ -1,0 +1,1339 @@
+<USER_REQUEST>
+
+I see the error! The frontend is working perfectly by catching the error, but your Python backend crashed while trying to process the file.
+Based on what happened, there are two highly likely reasons for this. Let's fix them both!
+Fix 1: The Missing Upload Library
+I realize I missed one tiny but crucial Python package in the installation step! FastAPI requires a specific library called python-multipart to accept file uploads from a frontend. Without it, it instantly rejects the file.
+Go to your Backend Command Prompt (where the FastAPI server is running).
+Press Ctrl + C to stop the server.
+Run this command to install the missing package:
+code
+Cmd
+pip install python-multipart
+Start the server again:
+code
+Cmd
+uvicorn main:app --reload
+Fix 2: The File is Too Massive!
+I noticed in your screenshot that you uploaded "Mechanics of Materials, 8ed. [Hibbeler]". That is a massive university textbook (usually 800+ pages and 50MB+)!
+Right now, our Python script is trying to read every single page of that massive book before sending it to the AI, which is probably causing your computer to run out of memory or the server to "Time Out".
+For this test, please use a small PDF (like a 2 to 5-page cheat sheet, a short article, or a single chapter). Later in the project, we will add an advanced "Chunking" feature to handle 800-page textbooks without crashing!
+Try it again!
+Make sure the backend is running again (uvicorn main:app --reload).
+Go back to your dashboard, refresh the page.
+Upload a small PDF (under 10 pages).
+Click Generate.
+If it still fails, look at your Backend Command Prompt. It will print out exactly what went wrong (e.g., "JSONDecodeError" or "RateLimit"). Tell me what the backend terminal says, and I'll know exactly how to fix it!
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-07-16T03:27:08+05:00.
+</ADDITIONAL_METADATA>
+<USER_SETTINGS_CHANGE>
+The user changed setting `Model Selection` from None to Gemini 3.5 Flash (Medium). No need to comment on this change if the user doesn't ask about it. If reporting what model you are, please use a human readable name instead of the exact string.
+</USER_SETTINGS_CHANGE>
+
+=====
+
+<USER_REQUEST>
+server is not awaking
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-07-16T03:38:54+05:00.
+</ADDITIONAL_METADATA>
+
+=====
+
+<USER_REQUEST>
+hase 3: The Course Viewer
+Right now, you have a beautiful Course Card on your dashboard, but the button says "View Course (Coming Soon)". Let's make that button actually open the course you generated so you can read it!
+Follow these 3 steps:
+Step 1: Update the Dashboard Button
+Open app/dashboard/page.tsx.
+Scroll down to line ~43, where you see the "View Course (Coming Soon)" button. Replace that <button> with a Next.js <Link> like this:
+Change this:
+code
+Tsx
+<button className="w-full bg-slate-900 text-white py-2 rounded-lg hover:bg-slate-800 transition">
+  View Course (Coming Soon)
+</button>
+To this:
+code
+Tsx
+<a 
+  href={`/course/${course.id}`}
+  className="block text-center w-full bg-slate-900 text-white py-2 rounded-lg hover:bg-slate-800 transition"
+>
+  View Course
+</a>
+Step 2: Create the Interactive Course Viewer UI
+We need a component that handles a left sidebar (for chapters) and a main reading area.
+Go to your components folder.
+Create a new file called CourseViewer.tsx and paste this code:
+code
+Tsx
+// components/CourseViewer.tsx
+'use client'
+
+import { useState } from 'react'
+import ReactMarkdown from 'react-markdown'
+
+export default function CourseViewer({ course, chapters }: any) {
+  // By default, select the very first lesson of the first chapter
+  const firstLesson = chapters[0]?.lessons?.[0]
+  const [activeLesson, setActiveLesson] = useState(firstLesson)
+
+  return (
+    <div className="flex h-screen bg-white">
+      {/* LEFT SIDEBAR - Table of Contents */}
+      <div className="w-80 border-r border-slate-200 bg-slate-50 overflow-y-auto flex flex-col">
+        <div className="p-6 border-b border-slate-200">
+          <a href="/dashboard" className="text-sm text-indigo-600 hover:underline mb-2 inline-block">← Back to Dashboard</a>
+          <h2 className="text-xl font-bold text-slate-900">{course.title}</h2>
+          <p className="text-sm text-slate-500 mt-1">{course.estimated_time} • {course.difficulty_level}</p>
+        </div>
+
+        <div className="p-4 flex-1">
+          {chapters.map((chapter: any) => (
+            <div key={chapter.id} className="mb-6">
+              <h3 className="font-bold text-slate-900 mb-2 uppercase text-xs tracking-wider">
+                {chapter.title}
+              </h3>
+              <ul className="space-y-1">
+                {chapter.lessons.sort((a: any, b: any) => a.lesson_order - b.lesson_order).map((lesson: any) => (
+                  <li key={lesson.id}>
+                    <button
+                      onClick={() => setActiveLesson(lesson)}
+                      className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
+                        activeLesson?.id === lesson.id 
+                          ? 'bg-indigo-100 text-indigo-700 font-medium' 
+                          : 'text-slate-600 hover:bg-slate-200'
+                      }`}
+                    >
+                      {lesson.lesson_order}. {lesson.title}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* MAIN CONTENT AREA - Lesson Reader */}
+      <div className="flex-1 overflow-y-auto p-12">
+        <div className="max-w-3xl mx-auto">
+          {activeLesson ? (
+            <>
+              <h1 className="text-4xl font-bold text-slate-900 mb-8">{activeLesson.title}</h1>
+              {/* This magically turns the AI's markdown into beautiful HTML */}
+              <div className="prose prose-indigo prose-lg max-w-none text-slate-700">
+                <ReactMarkdown>{activeLesson.content}</ReactMarkdown>
+              </div>
+              
+              <div className="mt-12 pt-8 border-t border-slate-200">
+                <button className="bg-emerald-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-emerald-600 transition shadow-sm">
+                  Mark Lesson as Complete
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className="text-center text-slate-500 mt-20">Select a lesson from the sidebar to start learning.</div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+Step 3: Create the Dynamic Course Page
+Now we tell Next.js how to load http://localhost:3000/course/12345.
+Inside your app folder, create a new folder called course.
+Inside course, create a folder named [id] (Yes, literally with the square brackets! This tells Next.js it's a dynamic route).
+Inside [id], create a file called page.tsx and paste this:
+code
+Tsx
+// app/course/[id]/page.tsx
+import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
+import CourseViewer from '@/components/CourseViewer'
+
+export default async function CoursePage({ params }: { params: Promise<{ id: string }> }) {
+  // 1. Get the course ID from the URL
+  const { id } = await params
+  
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  // 2. Fetch the Course details
+  const { data: course } = await supabase
+    .from('courses')
+    .select('*')
+    .eq('id', id)
+    .single()
+
+  // 3. Fetch Chapters and attach their Lessons
+  const { data: chapters } = await supabase
+    .from('chapters')
+    .select(`
+      *,
+      lessons (*)
+    `)
+    .eq('course_id', id)
+    .order('chapter_order', { ascending: true })
+
+  if (!course || !chapters) {
+    return <div className="p-8 text-center text-red-500">Course not found!</div>
+  }
+
+  // 4. Pass the data to our interactive UI
+  return <CourseViewer course={course} chapters={chapters} />
+}
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-07-16T03:46:38+05:00.
+</ADDITIONAL_METADATA>
+
+=====
+
+<USER_REQUEST>
+wait ill check by myslef
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-07-16T03:48:10+05:00.
+
+The user's current state is as follows:
+Browser State:
+  Page 25EEC7E50E77BA9FB0951ECD8EBDECC4 (AI E-Course Platform API - Swagger UI) - http://localhost:8000/docs#/default/generate_course_api_generate_course_post [ACTIVE]
+    Viewport: 1036x611, Page Height: 1744
+  Page 4F604665E9684B45F4EF46AF67EDCC9B (Create Next App) - http://localhost:3000/course/1
+    Viewport: 1036x611, Page Height: 611
+</ADDITIONAL_METADATA>
+
+=====
+
+<USER_REQUEST>
+That is fantastic. Seeing the AI's generated content beautifully rendered on your screen for the first time is the best part of this project!
+Now let's tackle Phase 4: Learning Progress.
+A learning platform is useless if you can't track your progress! We are going to make that "Mark Lesson as Complete" button actually work, save to the database, show checkmarks in the sidebar, and display a progress bar.
+Step 1: Update the Course Page to pass the User ID
+We need to tell the Course Viewer who is looking at the course so it can save their specific progress.
+Open app/course/[id]/page.tsx and simply change the very last line of the file to this:
+Change this:
+code
+Tsx
+return <CourseViewer course={course} chapters={chapters} />
+To this:
+code
+Tsx
+return <CourseViewer course={course} chapters={chapters} userId={user.id} />
+Step 2: Make the Course Viewer Interactive
+We are going to upgrade CourseViewer.tsx with a Database connection and a Progress Bar.
+Open components/CourseViewer.tsx, delete everything inside it, and paste this upgraded version:
+code
+Tsx
+// components/CourseViewer.tsx
+'use client'
+
+import { useState, useEffect } from 'react'
+import ReactMarkdown from 'react-markdown'
+import { createClient } from '@/lib/supabase/client'
+import { CheckCircle, Circle } from 'lucide-react'
+
+export default function CourseViewer({ course, chapters, userId }: any) {
+  const firstLesson = chapters[0]?.lessons?.[0]
+  const [activeLesson, setActiveLesson] = useState(firstLesson)
+  const [completedLessons, setCompletedLessons] = useState<Set<string>>(new Set())
+  const [loading, setLoading] = useState(false)
+  const supabase = createClient()
+
+  // 1. Calculate total lessons for the progress bar
+  const totalLessons = chapters.reduce((acc: number, chapter: any) => acc + chapter.lessons.length, 0)
+  const progressPercentage = totalLessons === 0 ? 0 : Math.round((completedLessons.size / totalLessons) * 100)
+
+  // 2. Fetch the user's progress when the course loads
+  useEffect(() => {
+    const fetchProgress = async () => {
+      const { data } = await supabase
+        .from('progress')
+        .select('lesson_id')
+        .eq('user_id', userId)
+        .eq('is_completed', true)
+
+      if (data) {
+        const completedIds = new Set(data.map((p) => p.lesson_id))
+        setCompletedLessons(completedIds)
+      }
+    }
+    fetchProgress()
+  }, [userId, supabase])
+
+  // 3. Handle clicking "Mark as Complete"
+  const handleMarkComplete = async () => {
+    if (!activeLesson || completedLessons.has(activeLesson.id)) return
+    setLoading(true)
+
+    try {
+      // Save to Supabase Database
+      const { error } = await supabase
+        .from('progress')
+        .insert({
+          user_id: userId,
+          lesson_id: activeLesson.id,
+          is_completed: true,
+          completed_at: new Date().toISOString()
+        })
+
+      if (error) throw error
+
+      // Update the UI immediately
+      setCompletedLessons((prev) => {
+        const newSet = new Set(prev)
+        newSet.add(activeLesson.id)
+        return newSet
+      })
+    } catch (error: any) {
+      alert("Error saving progress: " + error.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const isCurrentComplete = activeLesson ? completedLessons.has(activeLesson.id) : false
+
+  return (
+    <div className="flex h-screen bg-white">
+      {/* LEFT SIDEBAR */}
+      <div className="w-80 border-r border-slate-200 bg-slate-50 flex flex-col h-full">
+        <div className="p-6 border-b border-slate-200 bg-white">
+          <a href="/dashboard" className="text-sm text-indigo-600 hover:underline mb-4 inline-block font-medium">← Back to Dashboard</a>
+          <h2 className="text-xl font-bold text-slate-900 leading-tight">{course.title}</h2>
+          
+          {/* PROGRESS BAR */}
+          <div className="mt-6">
+            <div className="flex justify-between text-xs font-semibold text-slate-500 mb-2">
+              <span>Course Progress</span>
+              <span className="text-indigo-600">{progressPercentage}%</span>
+            </div>
+            <div className="w-full bg-slate-200 rounded-full h-2.5">
+              <div 
+                className="bg-indigo-600 h-2.5 rounded-full transition-all duration-500" 
+                style={{ width: `${progressPercentage}%` }}
+              ></div>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-4 flex-1 overflow-y-auto">
+          {chapters.map((chapter: any) => (
+            <div key={chapter.id} className="mb-6">
+              <h3 className="font-bold text-slate-900 mb-2 uppercase text-xs tracking-wider ml-2">
+                {chapter.title}
+              </h3>
+              <ul className="space-y-1">
+                {chapter.lessons.sort((a: any, b: any) => a.lesson_order - b.lesson_order).map((lesson: any) => {
+                  const isCompleted = completedLessons.has(lesson.id)
+                  const isActive = activeLesson?.id === lesson.id
+
+                  return (
+                    <li key={lesson.id}>
+                      <button
+                        onClick={() => setActiveLesson(lesson)}
+                        className={`w-full flex items-center gap-3 text-left px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                          isActive 
+                            ? 'bg-indigo-100 text-indigo-700 font-semibold' 
+                            : 'text-slate-600 hover:bg-slate-200'
+                        }`}
+                      >
+                        {/* Show Checkmark if completed, else show empty circle */}
+                        {isCompleted ? (
+                          <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                        ) : (
+                          <Circle className="w-4 h-4 text-slate-300 flex-shrink-0" />
+                        )}
+                        <span className="line-clamp-2">{lesson.lesson_order}. {lesson.title}</span>
+                      </button>
+                    </li>
+                  )
+                })}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* MAIN CONTENT AREA */}
+      <div className="flex-1 overflow-y-auto p-12 scroll-smooth">
+        <div className="max-w-3xl mx-auto pb-20">
+          {activeLesson ? (
+            <>
+              <h1 className="text-4xl font-bold text-slate-900 mb-8">{activeLesson.title}</h1>
+              <div className="prose prose-indigo prose-lg max-w-none text-slate-700">
+                <ReactMarkdown>{activeLesson.content}</ReactMarkdown>
+              </div>
+              
+              <div className="mt-16 pt-8 border-t border-slate-200">
+                {isCurrentComplete ? (
+                  <div className="flex items-center gap-2 text-emerald-600 font-bold bg-emerald-50 px-6 py-4 rounded-xl border border-emerald-200 w-fit">
+                    <CheckCircle className="w-6 h-6" />
+                    Lesson Completed! Great job.
+                  </div>
+                ) : (
+                  <button 
+                    onClick={handleMarkComplete}
+                    disabled={loading}
+                    className="flex items-center gap-2 bg-indigo-600 text-white px-8 py-4 rounded-xl font-medium hover:bg-indigo-700 transition shadow-sm disabled:opacity-70"
+                  >
+                    {loading ? 'Saving...' : 'Mark Lesson as Complete'}
+                  </button>
+                )}
+              </div>
+            </>
+          ) : (
+            <div className="text-center text-slate-500 mt-20">Select a lesson from the sidebar to start learning.</div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-07-16T03:50:11+05:00.
+
+The user's current state is as follows:
+Browser State:
+  Page 4F604665E9684B45F4EF46AF67EDCC9B (Create Next App) - http://localhost:3000/dashboard
+    Viewport: 1036x611, Page Height: 611
+  Page 25EEC7E50E77BA9FB0951ECD8EBDECC4 (localhost) - chrome-error://chromewebdata/ [ACTIVE]
+    Viewport: 1036x611, Page Height: 611
+</ADDITIONAL_METADATA>
+
+=====
+
+<USER_REQUEST>
+That is fantastic. Seeing the AI's generated content beautifully rendered on your screen for the first time is the best part of this project!
+Now let's tackle Phase 4: Learning Progress.
+A learning platform is useless if you can't track your progress! We are going to make that "Mark Lesson as Complete" button actually work, save to the database, show checkmarks in the sidebar, and display a progress bar.
+Step 1: Update the Course Page to pass the User ID
+We need to tell the Course Viewer who is looking at the course so it can save their specific progress.
+Open app/course/[id]/page.tsx and simply change the very last line of the file to this:
+Change this:
+code
+Tsx
+return <CourseViewer course={course} chapters={chapters} />
+To this:
+code
+Tsx
+return <CourseViewer course={course} chapters={chapters} userId={user.id} />
+Step 2: Make the Course Viewer Interactive
+We are going to upgrade CourseViewer.tsx with a Database connection and a Progress Bar.
+Open components/CourseViewer.tsx, delete everything inside it, and paste this upgraded version:
+code
+Tsx
+// components/CourseViewer.tsx
+'use client'
+
+import { useState, useEffect } from 'react'
+import ReactMarkdown from 'react-markdown'
+import { createClient } from '@/lib/supabase/client'
+import { CheckCircle, Circle } from 'lucide-react'
+
+export default function CourseViewer({ course, chapters, userId }: any) {
+  const firstLesson = chapters[0]?.lessons?.[0]
+  const [activeLesson, setActiveLesson] = useState(firstLesson)
+  const [completedLessons, setCompletedLessons] = useState<Set<string>>(new Set())
+  const [loading, setLoading] = useState(false)
+  const supabase = createClient()
+
+  // 1. Calculate total lessons for the progress bar
+  const totalLessons = chapters.reduce((acc: number, chapter: any) => acc + chapter.lessons.length, 0)
+  const progressPercentage = totalLessons === 0 ? 0 : Math.round((completedLessons.size / totalLessons) * 100)
+
+  // 2. Fetch the user's progress when the course loads
+  useEffect(() => {
+    const fetchProgress = async () => {
+      const { data } = await supabase
+        .from('progress')
+        .select('lesson_id')
+        .eq('user_id', userId)
+        .eq('is_completed', true)
+
+      if (data) {
+        const completedIds = new Set(data.map((p) => p.lesson_id))
+        setCompletedLessons(completedIds)
+      }
+    }
+    fetchProgress()
+  }, [userId, supabase])
+
+  // 3. Handle clicking "Mark as Complete"
+  const handleMarkComplete = async () => {
+    if (!activeLesson || completedLessons.has(activeLesson.id)) return
+    setLoading(true)
+
+    try {
+      // Save to Supabase Database
+      const { error } = await supabase
+        .from('progress')
+        .insert({
+          user_id: userId,
+          lesson_id: activeLesson.id,
+          is_completed: true,
+          completed_at: new Date().toISOString()
+        })
+
+      if (error) throw error
+
+      // Update the UI immediately
+      setCompletedLessons((prev) => {
+        const newSet = new Set(prev)
+        newSet.add(activeLesson.id)
+        return newSet
+      })
+    } catch (error: any) {
+      alert("Error saving progress: " + error.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const isCurrentComplete = activeLesson ? completedLessons.has(activeLesson.id) : false
+
+  return (
+    <div className="flex h-screen bg-white">
+      {/* LEFT SIDEBAR */}
+      <div className="w-80 border-r border-slate-200 bg-slate-50 flex flex-col h-full">
+        <div className="p-6 border-b border-slate-200 bg-white">
+          <a href="/dashboard" className="text-sm text-indigo-600 hover:underline mb-4 inline-block font-medium">← Back to Dashboard</a>
+          <h2 className="text-xl font-bold text-slate-900 leading-tight">{course.title}</h2>
+          
+          {/* PROGRESS BAR */}
+          <div className="mt-6">
+            <div className="flex justify-between text-xs font-semibold text-slate-500 mb-2">
+              <span>Course Progress</span>
+              <span className="text-indigo-600">{progressPercentage}%</span>
+            </div>
+            <div className="w-full bg-slate-200 rounded-full h-2.5">
+              <div 
+                className="bg-indigo-600 h-2.5 rounded-full transition-all duration-500" 
+                style={{ width: `${progressPercentage}%` }}
+              ></div>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-4 flex-1 overflow-y-auto">
+          {chapters.map((chapter: any) => (
+            <div key={chapter.id} className="mb-6">
+              <h3 className="font-bold text-slate-900 mb-2 uppercase text-xs tracking-wider ml-2">
+                {chapter.title}
+              </h3>
+              <ul className="space-y-1">
+                {chapter.lessons.sort((a: any, b: any) => a.lesson_order - b.lesson_order).map((lesson: any) => {
+                  const isCompleted = completedLessons.has(lesson.id)
+                  const isActive = activeLesson?.id === lesson.id
+
+                  return (
+                    <li key={lesson.id}>
+                      <button
+                        onClick={() => setActiveLesson(lesson)}
+                        className={`w-full flex items-center gap-3 text-left px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                          isActive 
+                            ? 'bg-indigo-100 text-indigo-700 font-semibold' 
+                            : 'text-slate-600 hover:bg-slate-200'
+                        }`}
+                      >
+                        {/* Show Checkmark if completed, else show empty circle */}
+                        {isCompleted ? (
+                          <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                        ) : (
+                          <Circle className="w-4 h-4 text-slate-300 flex-shrink-0" />
+                        )}
+                        <span className="line-clamp-2">{lesson.lesson_order}. {lesson.title}</span>
+                      </button>
+                    </li>
+                  )
+                })}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* MAIN CONTENT AREA */}
+      <div className="flex-1 overflow-y-auto p-12 scroll-smooth">
+        <div className="max-w-3xl mx-auto pb-20">
+          {activeLesson ? (
+            <>
+              <h1 className="text-4xl font-bold text-slate-900 mb-8">{activeLesson.title}</h1>
+              <div className="prose prose-indigo prose-lg max-w-none text-slate-700">
+                <ReactMarkdown>{activeLesson.content}</ReactMarkdown>
+              </div>
+              
+              <div className="mt-16 pt-8 border-t border-slate-200">
+                {isCurrentComplete ? (
+                  <div className="flex items-center gap-2 text-emerald-600 font-bold bg-emerald-50 px-6 py-4 rounded-xl border border-emerald-200 w-fit">
+                    <CheckCircle className="w-6 h-6" />
+                    Lesson Completed! Great job.
+                  </div>
+                ) : (
+                  <button 
+                    onClick={handleMarkComplete}
+                    disabled={loading}
+                    className="flex items-center gap-2 bg-indigo-600 text-white px-8 py-4 rounded-xl font-medium hover:bg-indigo-700 transition shadow-sm disabled:opacity-70"
+                  >
+                    {loading ? 'Saving...' : 'Mark Lesson as Complete'}
+                  </button>
+                )}
+              </div>
+            </>
+          ) : (
+            <div className="text-center text-slate-500 mt-20">Select a lesson from the sidebar to start learning.</div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-07-16T03:52:16+05:00.
+
+The user's current state is as follows:
+Browser State:
+  Page 25EEC7E50E77BA9FB0951ECD8EBDECC4 (localhost) - chrome-error://chromewebdata/ [ACTIVE]
+    Viewport: 1036x611, Page Height: 611
+  Page 4F604665E9684B45F4EF46AF67EDCC9B (Create Next App) - http://localhost:3000/dashboard
+    Viewport: 1036x611, Page Height: 611
+</ADDITIONAL_METADATA>
+
+=====
+
+<USER_REQUEST>
+That is fantastic. Seeing the AI's generated content beautifully rendered on your screen for the first time is the best part of this project!
+Now let's tackle Phase 4: Learning Progress.
+A learning platform is useless if you can't track your progress! We are going to make that "Mark Lesson as Complete" button actually work, save to the database, show checkmarks in the sidebar, and display a progress bar.
+Step 1: Update the Course Page to pass the User ID
+We need to tell the Course Viewer who is looking at the course so it can save their specific progress.
+Open app/course/[id]/page.tsx and simply change the very last line of the file to this:
+Change this:
+code
+Tsx
+return <CourseViewer course={course} chapters={chapters} />
+To this:
+code
+Tsx
+return <CourseViewer course={course} chapters={chapters} userId={user.id} />
+Step 2: Make the Course Viewer Interactive
+We are going to upgrade CourseViewer.tsx with a Database connection and a Progress Bar.
+Open components/CourseViewer.tsx, delete everything inside it, and paste this upgraded version:
+code
+Tsx
+// components/CourseViewer.tsx
+'use client'
+
+import { useState, useEffect } from 'react'
+import ReactMarkdown from 'react-markdown'
+import { createClient } from '@/lib/supabase/client'
+import { CheckCircle, Circle } from 'lucide-react'
+
+export default function CourseViewer({ course, chapters, userId }: any) {
+  const firstLesson = chapters[0]?.lessons?.[0]
+  const [activeLesson, setActiveLesson] = useState(firstLesson)
+  const [completedLessons, setCompletedLessons] = useState<Set<string>>(new Set())
+  const [loading, setLoading] = useState(false)
+  const supabase = createClient()
+
+  // 1. Calculate total lessons for the progress bar
+  const totalLessons = chapters.reduce((acc: number, chapter: any) => acc + chapter.lessons.length, 0)
+  const progressPercentage = totalLessons === 0 ? 0 : Math.round((completedLessons.size / totalLessons) * 100)
+
+  // 2. Fetch the user's progress when the course loads
+  useEffect(() => {
+    const fetchProgress = async () => {
+      const { data } = await supabase
+        .from('progress')
+        .select('lesson_id')
+        .eq('user_id', userId)
+        .eq('is_completed', true)
+
+      if (data) {
+        const completedIds = new Set(data.map((p) => p.lesson_id))
+        setCompletedLessons(completedIds)
+      }
+    }
+    fetchProgress()
+  }, [userId, supabase])
+
+  // 3. Handle clicking "Mark as Complete"
+  const handleMarkComplete = async () => {
+    if (!activeLesson || completedLessons.has(activeLesson.id)) return
+    setLoading(true)
+
+    try {
+      // Save to Supabase Database
+      const { error } = await supabase
+        .from('progress')
+        .insert({
+          user_id: userId,
+          lesson_id: activeLesson.id,
+          is_completed: true,
+          completed_at: new Date().toISOString()
+        })
+
+      if (error) throw error
+
+      // Update the UI immediately
+      setCompletedLessons((prev) => {
+        const newSet = new Set(prev)
+        newSet.add(activeLesson.id)
+        return newSet
+      })
+    } catch (error: any) {
+      alert("Error saving progress: " + error.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const isCurrentComplete = activeLesson ? completedLessons.has(activeLesson.id) : false
+
+  return (
+    <div className="flex h-screen bg-white">
+      {/* LEFT SIDEBAR */}
+      <div className="w-80 border-r border-slate-200 bg-slate-50 flex flex-col h-full">
+        <div className="p-6 border-b border-slate-200 bg-white">
+          <a href="/dashboard" className="text-sm text-indigo-600 hover:underline mb-4 inline-block font-medium">← Back to Dashboard</a>
+          <h2 className="text-xl font-bold text-slate-900 leading-tight">{course.title}</h2>
+          
+          {/* PROGRESS BAR */}
+          <div className="mt-6">
+            <div className="flex justify-between text-xs font-semibold text-slate-500 mb-2">
+              <span>Course Progress</span>
+              <span className="text-indigo-600">{progressPercentage}%</span>
+            </div>
+            <div className="w-full bg-slate-200 rounded-full h-2.5">
+              <div 
+                className="bg-indigo-600 h-2.5 rounded-full transition-all duration-500" 
+                style={{ width: `${progressPercentage}%` }}
+              ></div>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-4 flex-1 overflow-y-auto">
+          {chapters.map((chapter: any) => (
+            <div key={chapter.id} className="mb-6">
+              <h3 className="font-bold text-slate-900 mb-2 uppercase text-xs tracking-wider ml-2">
+                {chapter.title}
+              </h3>
+              <ul className="space-y-1">
+                {chapter.lessons.sort((a: any, b: any) => a.lesson_order - b.lesson_order).map((lesson: any) => {
+                  const isCompleted = completedLessons.has(lesson.id)
+                  const isActive = activeLesson?.id === lesson.id
+
+                  return (
+                    <li key={lesson.id}>
+                      <button
+                        onClick={() => setActiveLesson(lesson)}
+                        className={`w-full flex items-center gap-3 text-left px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                          isActive 
+                            ? 'bg-indigo-100 text-indigo-700 font-semibold' 
+                            : 'text-slate-600 hover:bg-slate-200'
+                        }`}
+                      >
+                        {/* Show Checkmark if completed, else show empty circle */}
+                        {isCompleted ? (
+                          <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                        ) : (
+                          <Circle className="w-4 h-4 text-slate-300 flex-shrink-0" />
+                        )}
+                        <span className="line-clamp-2">{lesson.lesson_order}. {lesson.title}</span>
+                      </button>
+                    </li>
+                  )
+                })}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* MAIN CONTENT AREA */}
+      <div className="flex-1 overflow-y-auto p-12 scroll-smooth">
+        <div className="max-w-3xl mx-auto pb-20">
+          {activeLesson ? (
+            <>
+              <h1 className="text-4xl font-bold text-slate-900 mb-8">{activeLesson.title}</h1>
+              <div className="prose prose-indigo prose-lg max-w-none text-slate-700">
+                <ReactMarkdown>{activeLesson.content}</ReactMarkdown>
+              </div>
+              
+              <div className="mt-16 pt-8 border-t border-slate-200">
+                {isCurrentComplete ? (
+                  <div className="flex items-center gap-2 text-emerald-600 font-bold bg-emerald-50 px-6 py-4 rounded-xl border border-emerald-200 w-fit">
+                    <CheckCircle className="w-6 h-6" />
+                    Lesson Completed! Great job.
+                  </div>
+                ) : (
+                  <button 
+                    onClick={handleMarkComplete}
+                    disabled={loading}
+                    className="flex items-center gap-2 bg-indigo-600 text-white px-8 py-4 rounded-xl font-medium hover:bg-indigo-700 transition shadow-sm disabled:opacity-70"
+                  >
+                    {loading ? 'Saving...' : 'Mark Lesson as Complete'}
+                  </button>
+                )}
+              </div>
+            </>
+          ) : (
+            <div className="text-center text-slate-500 mt-20">Select a lesson from the sidebar to start learning.</div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-07-16T03:53:53+05:00.
+
+The user's current state is as follows:
+No browser pages are currently open.
+</ADDITIONAL_METADATA>
+
+=====
+
+<USER_REQUEST>
+Make sure your Python server is running (uvicorn main:app --reload). You might need to restart it so it recognizes the new code we added to main.py!
+
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-07-16T03:54:48+05:00.
+
+The user's current state is as follows:
+No browser pages are currently open.
+</ADDITIONAL_METADATA>
+
+=====
+
+<USER_REQUEST>
+Let's fix that! If it's not showing up, it is almost certainly hiding behind the main white background of the course content because we forgot to give it a "z-index" (which tells the browser to put it on the very top layer), or your browser just needs a hard refresh.
+Let's do a quick 30-second fix:
+Step 1: Bring the button to the front
+Open components/CourseViewer.tsx.
+Scroll down near the bottom until you find the {/* FLOATING CHAT BUTTON */} section.
+We are going to add z-50 to the button's className to force it to sit on top of everything.
+Change this block:
+code
+Tsx
+{/* FLOATING CHAT BUTTON */}
+      {!isChatOpen && (
+        <button 
+          onClick={() => setIsChatOpen(true)}
+          className="fixed bottom-8 right-8 bg-slate-900 text-white p-4 rounded-full shadow-2xl hover:bg-slate-800 transition transform hover:scale-105 flex items-center gap-2"
+        >
+          <MessageSquare className="w-6 h-6" />
+          <span className="font-medium pr-2">Ask AI Assistant</span>
+        </button>
+      )}
+To this (Notice the z-50 added!):
+code
+Tsx
+{/* FLOATING CHAT BUTTON */}
+      {!isChatOpen && (
+        <button 
+          onClick={() => setIsChatOpen(true)}
+          className="fixed bottom-8 right-8 z-50 bg-slate-900 text-white p-4 rounded-full shadow-2xl hover:bg-slate-800 transition transform hover:scale-105 flex items-center gap-2"
+        >
+          <MessageSquare className="w-6 h-6" />
+          <span className="font-medium pr-2">Ask AI Assistant</span>
+        </button>
+      )}
+Step 2: Check your Next.js Terminal
+Look at your Next.js Command Prompt window (the one running npm run dev). Are there any errors? Sometimes if it fails to compile, it will keep showing you the old version of the page.
+Step 3: Hard Refresh
+Save the file.
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-07-16T03:58:13+05:00.
+
+The user's current state is as follows:
+No browser pages are currently open.
+</ADDITIONAL_METADATA>
+
+=====
+
+<USER_REQUEST>
+
+Let's figure out exactly where the connection is getting blocked. We can fix this!
+When you click "Send", the frontend tries to talk to your Python backend at /api/chat. If it fails, the problem is usually one of these three things. Let's check them:
+1. Did you restart the Python Backend?
+Whenever you add a brand new endpoint (like the /api/chat we just added) to main.py, you must restart the server so it can learn the new code.
+Go to your Backend Command Prompt.
+Press Ctrl + C to stop the server.
+Run the command again to start it: uvicorn main:app --reload
+Now, go back to your browser, refresh the page, and try chatting again.
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-07-16T04:01:52+05:00.
+
+The user's current state is as follows:
+No browser pages are currently open.
+</ADDITIONAL_METADATA>
+
+=====
+
+<USER_REQUEST>
+do
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-07-16T04:03:02+05:00.
+</ADDITIONAL_METADATA>
+
+=====
+
+<USER_REQUEST>
+
+That is awesome! Now you have a fully working AI Chatbot that literally reads your PDF and tutors you on it. This is a highly advanced feature for any learning platform!
+We are now moving to Phase 6: AI Quiz Generation.
+The assignment requires the platform to automatically generate quizzes (Multiple Choice & True/False) to test the user's knowledge, and then display their score and explanations.
+Let's do this in two steps. First, the Backend.
+Step 1: Add the Quiz Endpoint to your Python Backend
+We need to tell FastAPI how to ask Groq to generate a JSON quiz based on the lesson text.
+Open your backend/main.py file.
+Scroll to the very bottom and paste this new code:
+code
+Python
+# --- ADD THIS TO THE BOTTOM OF main.py ---
+
+class QuizRequest(BaseModel):
+    context: str
+
+@app.post("/api/generate-quiz")
+async def generate_quiz(request: QuizRequest):
+    try:
+        prompt = f"""
+        You are an expert educator. Generate a 3-question quiz based on the following text. 
+        Include a mix of Multiple Choice and True/False questions.
+        You MUST return ONLY a valid JSON object. Do not include markdown formatting like ```json.
+        
+        Use this EXACT JSON structure:
+        {{
+          "questions": [
+            {{
+              "question": "The question text",
+              "type": "multiple_choice",
+              "options": ["Option 1", "Option 2", "Option 3", "Option 4"],
+              "correct_answer": "The exact text of the correct option",
+              "explanation": "Short explanation of why this is correct"
+            }}
+          ]
+        }}
+        
+        Text to process:
+        {request.context}
+        """
+
+        response = groq_client.chat.completions.create(
+            messages=[{"role": "user", "content": prompt}],
+            model="llama3-8b-8192",
+            temperature=0.3,
+        )
+
+        quiz_data = json.loads(response.choices[0].message.content)
+        return quiz_data
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Quiz generation error: {str(e)}")
+Restart your Python Server: Go to your Backend Command Prompt, press Ctrl + C, and run uvicorn main:app --reload to apply the new code.
+Step 2: Create the Quiz UI Component
+To keep our code clean, we will create a separate component just for taking quizzes.
+Go to your frontend code, in the components folder.
+Create a new file called QuizSection.tsx.
+Paste this code inside it:
+code
+Tsx
+// components/QuizSection.tsx
+'use client'
+
+import { useState } from 'react'
+import { Loader2, CheckCircle, XCircle } from 'lucide-react'
+
+export default function QuizSection({ lessonContent }: { lessonContent: string }) {
+  const [quiz, setQuiz] = useState<any>(null)
+  const [loading, setLoading] = useState(false)
+  const [userAnswers, setUserAnswers] = useState<Record<number, string>>({})
+  const [showResults, setShowResults] = useState(false)
+  const [score, setScore] = useState(0)
+
+  const generateQuiz = async () => {
+    setLoading(true)
+    try {
+      const response = await fetch('http://localhost:8000/api/generate-quiz', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ context: lessonContent }),
+      })
+      if (!response.ok) throw new Error('Failed to generate quiz')
+      const data = await response.json()
+      setQuiz(data.questions)
+      setUserAnswers({})
+      setShowResults(false)
+    } catch (error) {
+      alert("Error generating quiz. Please try again.")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const submitQuiz = () => {
+    let currentScore = 0
+    quiz.forEach((q: any, index: number) => {
+      if (userAnswers[index] === q.correct_answer) {
+        currentScore += 1
+      }
+    })
+    setScore(currentScore)
+    setShowResults(true)
+  }
+
+  if (!quiz) {
+    return (
+      <div className="mt-8 pt-8 border-t border-slate-200">
+        <button 
+          onClick={generateQuiz} 
+          disabled={loading}
+          className="flex items-center gap-2 bg-indigo-100 text-indigo-700 px-6 py-3 rounded-xl font-medium hover:bg-indigo-200 transition disabled:opacity-50"
+        >
+          {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : '🧠 Generate a Practice Quiz'}
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="mt-12 p-8 bg-slate-50 border border-slate-200 rounded-2xl">
+      <h3 className="text-2xl font-bold text-slate-900 mb-6">Knowledge Check</h3>
+      
+      {quiz.map((q: any, qIndex: number) => (
+        <div key={qIndex} className="mb-8">
+          <p className="font-medium text-slate-900 mb-4">{qIndex + 1}. {q.question}</p>
+          <div className="space-y-2">
+            {q.options.map((option: string, oIndex: number) => {
+              const isSelected = userAnswers[qIndex] === option
+              const isCorrect = option === q.correct_answer
+              
+              let optionClass = "w-full text-left px-4 py-3 rounded-lg border transition "
+              if (!showResults) {
+                optionClass += isSelected ? "bg-indigo-600 border-indigo-600 text-white" : "bg-white border-slate-300 hover:bg-slate-100 text-slate-700"
+              } else {
+                if (isCorrect) optionClass += "bg-emerald-100 border-emerald-500 text-emerald-800 font-medium"
+                else if (isSelected && !isCorrect) optionClass += "bg-red-100 border-red-500 text-red-800"
+                else optionClass += "bg-white border-slate-300 opacity-50 text-slate-500"
+              }
+
+              return (
+                <button
+                  key={oIndex}
+                  disabled={showResults}
+                  onClick={() => setUserAnswers({ ...userAnswers, [qIndex]: option })}
+                  className={optionClass}
+                >
+                  {option}
+                </button>
+              )
+            })}
+          </div>
+          
+          {showResults && (
+            <div className={`mt-3 p-4 rounded-lg text-sm flex items-start gap-2 ${userAnswers[qIndex] === q.correct_answer ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-red-50 text-red-800 border border-red-200'}`}>
+              {userAnswers[qIndex] === q.correct_answer ? <CheckCircle className="w-5 h-5 flex-shrink-0 mt-0.5" /> : <XCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />}
+              <div>
+                <span className="font-bold">{userAnswers[qIndex] === q.correct_answer ? 'Correct!' : 'Incorrect.'} </span>
+                {q.explanation}
+              </div>
+            </div>
+          )}
+        </div>
+      ))}
+
+      {!showResults ? (
+        <button 
+          onClick={submitQuiz}
+          disabled={Object.keys(userAnswers).length !== quiz.length}
+          className="w-full bg-slate-900 text-white py-4 rounded-xl font-medium hover:bg-slate-800 transition disabled:opacity-50"
+        >
+          Submit Answers
+        </button>
+      ) : (
+        <div className="text-center mt-6">
+          <p className="text-2xl font-bold text-slate-900 mb-4">You scored {score} out of {quiz.length}!</p>
+          <button 
+            onClick={() => { setQuiz(null); setShowResults(false) }}
+            className="text-indigo-600 font-medium hover:underline"
+          >
+            Take another quiz
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+Step 3: Add the Quiz to your Course Viewer
+Now we just need to put this new component at the bottom of our lessons!
+Open components/CourseViewer.tsx.
+At the top of the file, add this import right below the others:
+code
+Tsx
+import QuizSection from './QuizSection'
+Scroll down to where the "Mark Lesson as Complete" button is (around line 171).
+Right below that whole section (below the </div> that holds the Mark Complete button, but before the </> fragment ends), add <QuizSection lessonContent={activeLesson.content} />
+It should look exactly like this:
+code
+Tsx
+<div className="mt-16 pt-8 border-t border-slate-200">
+                {isCurrentComplete ? (
+                  <div className="flex items-center gap-2 text-emerald-600 font-bold bg-emerald-50 px-6 py-4 rounded-xl border border-emerald-200 w-fit">
+                    <CheckCircle className="w-6 h-6" /> Lesson Completed! Great job.
+                  </div>
+                ) : (
+                  <button onClick={handleMarkComplete} disabled={loadingComplete} className="flex items-center gap-2 bg-indigo-600 text-white px-8 py-4 rounded-xl font-medium hover:bg-indigo-700 transition shadow-sm disabled:opacity-70">
+                    {loadingComplete ? 'Saving...' : 'Mark Lesson as Complete'}
+                  </button>
+                )}
+              </div>
+              
+              {/* NEW QUIZ SECTION */}
+              <QuizSection lessonContent={activeLesson.content} />
+            </>
+          ) : (
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-07-16T04:06:11+05:00.
+</ADDITIONAL_METADATA>
+
+=====
+
+<USER_REQUEST>
+
+That is awesome! Now you have a fully working AI Chatbot that literally reads your PDF and tutors you on it. This is a highly advanced feature for any learning platform!
+We are now moving to Phase 6: AI Quiz Generation.
+The assignment requires the platform to automatically generate quizzes (Multiple Choice & True/False) to test the user's knowledge, and then display their score and explanations.
+Let's do this in two steps. First, the Backend.
+Step 1: Add the Quiz Endpoint to your Python Backend
+We need to tell FastAPI how to ask Groq to generate a JSON quiz based on the lesson text.
+Open your backend/main.py file.
+Scroll to the very bottom and paste this new code:
+code
+Python
+# --- ADD THIS TO THE BOTTOM OF main.py ---
+
+class QuizRequest(BaseModel):
+    context: str
+
+@app.post("/api/generate-quiz")
+async def generate_quiz(request: QuizRequest):
+    try:
+        prompt = f"""
+        You are an expert educator. Generate a 3-question quiz based on the following text. 
+        Include a mix of Multiple Choice and True/False questions.
+        You MUST return ONLY a valid JSON object. Do not include markdown formatting like ```json.
+        
+        Use this EXACT JSON structure:
+        {{
+          "questions": [
+            {{
+              "question": "The question text",
+              "type": "multiple_choice",
+              "options": ["Option 1", "Option 2", "Option 3", "Option 4"],
+              "correct_answer": "The exact text of the correct option",
+              "explanation": "Short explanation of why this is correct"
+            }}
+          ]
+        }}
+        
+        Text to process:
+        {request.context}
+        """
+
+        response = groq_client.chat.completions.create(
+            messages=[{"role": "user", "content": prompt}],
+            model="llama3-8b-8192",
+            temperature=0.3,
+        )
+
+        quiz_data = json.loads(response.choices[0].message.content)
+        return quiz_data
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Quiz generation error: {str(e)}")
+Restart your Python Server: Go to your Backend Command Prompt, press Ctrl + C, and run uvicorn main:app --reload to apply the new code.
+Step 2: Create the Quiz UI Component
+To keep our code clean, we will create a separate component just for taking quizzes.
+Go to your frontend code, in the components folder.
+Create a new file called QuizSection.tsx.
+Paste this code inside it:
+code
+Tsx
+// components/QuizSection.tsx
+'use client'
+
+import { useState } from 'react'
+import { Loader2, CheckCircle, XCircle } from 'lucide-react'
+
+export default function QuizSection({ lessonContent }: { lessonContent: string }) {
+  const [quiz, setQuiz] = useState<any>(null)
+  const [loading, setLoading] = useState(false)
+  const [userAnswers, setUserAnswers] = useState<Record<number, string>>({})
+  const [showResults, setShowResults] = useState(false)
+  const [score, setScore] = useState(0)
+
+  const generateQuiz = async () => {
+    setLoading(true)
+    try {
+      const response = await fetch('http://localhost:8000/api/generate-quiz', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ context: lessonContent }),
+      })
+      if (!response.ok) throw new Error('Failed to generate quiz')
+      const data = await response.json()
+      setQuiz(data.questions)
+      setUserAnswers({})
+      setShowResults(false)
+    } catch (error) {
+      alert("Error generating quiz. Please try again.")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const submitQuiz = () => {
+    let currentScore = 0
+    quiz.forEach((q: any, index: number) => {
+      if (userAnswers[index] === q.correct_answer) {
+        currentScore += 1
+      }
+    })
+    setScore(currentScore)
+    setShowResults(true)
+  }
+
+  if (!quiz) {
+    return (
+      <div className="mt-8 pt-8 border-t border-slate-200">
+        <button 
+          onClick={generateQuiz} 
+          disabled={loading}
+          className="flex items-center gap-2 bg-indigo-100 text-indigo-700 px-6 py-3 rounded-xl font-medium hover:bg-indigo-200 transition disabled:opacity-50"
+        >
+          {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : '🧠 Generate a Practice Quiz'}
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="mt-12 p-8 bg-slate-50 border border-slate-200 rounded-2xl">
+      <h3 className="text-2xl font-bold text-slate-900 mb-6">Knowledge Check</h3>
+      
+      {quiz.map((q: any, qIndex: number) => (
+        <div key={qIndex} className="mb-8">
+          <p className="font-medium text-slate-900 mb-4">{qIndex + 1}. {q.question}</p>
+          <div className="space-y-2">
+            {q.options.map((option: string, oIndex: number) => {
+              const isSelected = userAnswers[qIndex] === option
+              const isCorrect = option === q.correct_answer
+              
+              let optionClass = "w-full text-left px-4 py-3 rounded-lg border transition "
+              if (!showResults) {
+                optionClass += isSelected ? "bg-indigo-600 border-indigo-600 text-white" : "bg-white border-slate-300 hover:bg-slate-100 text-slate-700"
+              } else {
+                if (isCorrect) optionClass += "bg-emerald-100 border-emerald-500 text-emerald-800 font-medium"
+                else if (isSelected && !isCorrect) optionClass += "bg-red-100 border-red-500 text-red-800"
+                else optionClass += "bg-white border-slate-300 opacity-50 text-slate-500"
+              }
+
+              return (
+                <button
+                  key={oIndex}
+                  disabled={showResults}
+                  onClick={() => setUserAnswers({ ...userAnswers, [qIndex]: option })}
+                  className={optionClass}
+                >
+                  {option}
+                </button>
+              )
+            })}
+          </div>
+          
+          {showResults && (
+            <div className={`mt-3 p-4 rounded-lg text-sm flex items-start gap-2 ${userAnswers[qIndex] === q.correct_answer ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-red-50 text-red-800 border border-red-200'}`}>
+              {userAnswers[qIndex] === q.correct_answer ? <CheckCircle className="w-5 h-5 flex-shrink-0 mt-0.5" /> : <XCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />}
+              <div>
+                <span className="font-bold">{userAnswers[qIndex] === q.correct_answer ? 'Correct!' : 'Incorrect.'} </span>
+                {q.explanation}
+              </div>
+            </div>
+          )}
+        </div>
+      ))}
+
+      {!showResults ? (
+        <button 
+          onClick={submitQuiz}
+          disabled={Object.keys(userAnswers).length !== quiz.length}
+          className="w-full bg-slate-900 text-white py-4 rounded-xl font-medium hover:bg-slate-800 transition disabled:opacity-50"
+        >
+          Submit Answers
+        </button>
+      ) : (
+        <div className="text-center mt-6">
+          <p className="text-2xl font-bold text-slate-900 mb-4">You scored {score} out of {quiz.length}!</p>
+          <button 
+            onClick={() => { setQuiz(null); setShowResults(false) }}
+            className="text-indigo-600 font-medium hover:underline"
+          >
+            Take another quiz
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+Step 3: Add the Quiz to your Course Viewer
+Now we just need to put this new component at the bottom of our lessons!
+Open components/CourseViewer.tsx.
+At the top of the file, add this import right below the others:
+code
+Tsx
+import QuizSection from './QuizSection'
+Scroll down to where the "Mark Lesson as Complete" button is (around line 171).
+Right below that whole section (below the </div> that holds the Mark Complete button, but before the </> fragment ends), add <QuizSection lessonContent={activeLesson.content} />
+It should look exactly like this:
+code
+Tsx
+<div className="mt-16 pt-8 border-t border-slate-200">
+                {isCurrentComplete ? (
+                  <div className="flex items-center gap-2 text-emerald-600 font-bold bg-emerald-50 px-6 py-4 rounded-xl border border-emerald-200 w-fit">
+                    <CheckCircle className="w-6 h-6" /> Lesson Completed! Great job.
+                  </div>
+                ) : (
+                  <button onClick={handleMarkComplete} disabled={loadingComplete} className="flex items-center gap-2 bg-indigo-600 text-white px-8 py-4 rounded-xl font-medium hover:bg-indigo-700 transition shadow-sm disabled:opacity-70">
+                    {loadingComplete ? 'Saving...' : 'Mark Lesson as Complete'}
+                  </button>
+                )}
+              </div>
+              
+              {/* NEW QUIZ SECTION */}
+              <QuizSection lessonContent={activeLesson.content} />
+            </>
+          ) : (
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-07-16T04:06:49+05:00.
+</ADDITIONAL_METADATA>
+<USER_SETTINGS_CHANGE>
+The user changed setting `Model Selection` from Gemini 3.5 Flash (Medium) to Gemini 3.1 Pro (High). No need to comment on this change if the user doesn't ask about it. If reporting what model you are, please use a human readable name instead of the exact string.
+</USER_SETTINGS_CHANGE>
