@@ -176,12 +176,11 @@ export default function CourseViewer({ course, chapters, userId }: any) {
       <div className={`
         fixed bottom-24 right-6 z-50
         w-[350px] md:w-[380px] h-[500px] max-h-[70vh]
-        bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl
-        border border-slate-200/60 dark:border-slate-800
-        shadow-[0_20px_50px_rgba(0,0,0,0.15)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.4)]
-        rounded-[2rem] overflow-hidden flex flex-col
-        transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]
-        max-[640px]:w-[92vw] max-[640px]:right-[4vw] max-[640px]:bottom-20
+        bg-white dark:bg-slate-900
+        border border-slate-200 dark:border-slate-800
+        shadow-2xl
+        rounded-3xl overflow-hidden flex flex-col
+        transition-all duration-500 ease-out
         ${isChatOpen ? 'scale-100 opacity-100 translate-y-0' : 'scale-90 opacity-0 translate-y-10 pointer-events-none'}
       `}>
 
