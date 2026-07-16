@@ -85,6 +85,7 @@ async def generate_course(file: UploadFile = File(...)):
             model="llama-3.1-8b-instant",
             temperature=0.2,
             max_tokens=3000,
+            response_format={"type": "json_object"}
         )
 
         raw_content = response.choices[0].message.content
