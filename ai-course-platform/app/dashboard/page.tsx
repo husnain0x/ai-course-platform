@@ -53,6 +53,19 @@ export default async function DashboardPage() {
         
         <FileUpload userId={user.id} />
         <CourseList initialCourses={courses || []} />
+
+        {/* Professional Footer */}
+        <footer className="mt-20 pt-10 border-t border-slate-200/50 dark:border-slate-800 text-center pb-8">
+          <div className="flex justify-center gap-6 text-[10px] uppercase tracking-widest font-bold text-slate-500 dark:text-slate-400 mb-6">
+            <a href="https://github.com/husnain0x" target="_blank" rel="noreferrer" className="hover:text-slate-900 dark:hover:text-white transition-colors">GitHub</a>
+            <a href="#" className="hover:text-slate-900 dark:hover:text-white transition-colors">Instagram</a>
+            <a href="#" className="hover:text-slate-900 dark:hover:text-white transition-colors">Discord</a>
+            <a href="#" className="hover:text-slate-900 dark:hover:text-white transition-colors">Email</a>
+          </div>
+          <p className="text-[11px] font-medium text-slate-400 dark:text-slate-500 opacity-80">
+            © {new Date().getFullYear()} Husnain Ajmal - Robotics & AI Engineer - Built & deployed on Vercel
+          </p>
+        </footer>
       </main>
     </div>
   )
