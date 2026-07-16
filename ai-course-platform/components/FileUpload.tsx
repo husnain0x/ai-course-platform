@@ -15,6 +15,11 @@ export default function FileUpload({ userId }: { userId: string }) {
 
   const handleUpload = async () => {
     if (!file) return
+    // Validate file type (must be PDF)
+    if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+      window.alert('Please insert PDF files only.')
+      return
+    }
     setLoading(true)
     
     try {
