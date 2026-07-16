@@ -15,12 +15,11 @@ export default function FileUpload({ userId }: { userId: string }) {
 
   const handleUpload = async () => {
     if (!file) return
-    // Validate file type (must be PDF)
-    if (
-      file.type !== 'application/pdf' ||
-      !file.name.toLowerCase().endsWith('.pdf')
-    ) {
-      window.alert('Please upload PDF files only.')
+    // Validate file type (must be PDF or DOCX)
+    const isPDF = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')
+    const isDocx = file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || file.name.toLowerCase().endsWith('.docx')
+    if (!isPDF && !isDocx) {
+      window.alert('uploading wrong file please put pdf or docx files only')
       return
     }
     setLoading(true)
@@ -108,14 +107,14 @@ export default function FileUpload({ userId }: { userId: string }) {
             <Sparkles className="w-5 h-5 text-indigo-500 dark:text-indigo-400" />
             Generate New Course
           </h2>
-          <p className="text-slate-500 dark:text-slate-400 mt-2">Upload any PDF document, book, or research paper and let our AI transform it into a structured, interactive e-course instantly.</p>
+          <p className="text-slate-500 dark:text-slate-400 mt-2">Upload any PDF or DOCX document, book, or research paper and let our AI transform it into a structured, interactive e-course instantly.</p>
         </div>
         
         <div className="w-full md:w-[400px]">
           <div className={`group flex flex-col items-center justify-center border-2 border-dashed rounded-2xl p-8 transition-all duration-300 relative cursor-pointer
             ${file ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-500/10 dark:border-indigo-400' : 'border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-indigo-400 dark:hover:border-indigo-500'}`}>
             <input 
-            type="file" accept=".pdf" onChange={(e) => setFile(e.target.files?.[0] || null)}
+            type="file" accept=".pdf,.docx" onChange={(e) => setFile(e.target.files?.[0] || null)}
             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" disabled={loading}
           />
             
@@ -130,7 +129,7 @@ export default function FileUpload({ userId }: { userId: string }) {
                 <div className="w-14 h-14 bg-white dark:bg-slate-900 rounded-full shadow-sm flex items-center justify-center mb-4 border border-transparent dark:border-slate-700">
                   <UploadCloud className="w-6 h-6 text-indigo-500 dark:text-indigo-400" />
                 </div>
-                <p className="text-slate-700 dark:text-slate-300 font-medium">Drag & drop your PDF here</p>
+                <p className="text-slate-700 dark:text-slate-300 font-medium">Drag & drop your PDF or DOCX here</p>
                 <p className="text-slate-400 dark:text-slate-500 text-sm mt-1">Maximum file size 50MB</p>
               </div>
             )}

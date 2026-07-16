@@ -43,8 +43,8 @@ async def generate_course(file: UploadFile = File(...)):
             doc = fitz.open(stream=file_bytes, filetype="pdf")
             for page in doc:
                 extracted_text += page.get_text()
-                # 🛑 SAFETY RAIL 1: Limit to ~30k characters for speed
-                if len(extracted_text) > 30000:
+                # 🛑 SAFETY RAIL 1: Limit to ~15k characters for speed
+                if len(extracted_text) > 15000:
                     break
         elif extension == "docx":
             import io
@@ -52,7 +52,7 @@ async def generate_course(file: UploadFile = File(...)):
             document = Document(io.BytesIO(file_bytes))
             for para in document.paragraphs:
                 extracted_text += para.text + "\n"
-                if len(extracted_text) > 30000:
+                if len(extracted_text) > 15000:
                     break
 
         if not extracted_text.strip():
@@ -63,9 +63,9 @@ async def generate_course(file: UploadFile = File(...)):
         ACT AS A DATA GENERATOR. CONVERT TEXT TO JSON.
         RULES:
         - NO INTRO. NO OUTRO. ONLY JSON.
-        - MAX 3 CHAPTERS.
+        - MAX 2 CHAPTERS.
         - MAX 2 LESSONS PER CHAPTER.
-        - LESSON CONTENT: 150 WORDS MAX.
+        - LESSON CONTENT: 100 WORDS MAX.
         
         STRUCTURE:
         {{
@@ -84,7 +84,7 @@ async def generate_course(file: UploadFile = File(...)):
             messages=[{"role": "user", "content": prompt}],
             model="llama-3.1-8b-instant",
             temperature=0.1,
-            max_tokens=2000,
+            max_tokens=1500,
         )
 
         raw_content = response.choices[0].message.content
