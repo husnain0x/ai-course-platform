@@ -63,9 +63,9 @@ async def generate_course(file: UploadFile = File(...)):
         ACT AS A DATA GENERATOR. CONVERT TEXT TO JSON.
         RULES:
         - NO INTRO. NO OUTRO. ONLY JSON.
-        - MAX 2 CHAPTERS.
-        - MAX 2 LESSONS PER CHAPTER.
-        - LESSON CONTENT: 100 WORDS MAX.
+        - GENERATE BETWEEN 3 TO 4 CHAPTERS.
+        - MAX 3 LESSONS PER CHAPTER.
+        - LESSON CONTENT: 150-200 WORDS. ADD RICH CONTEXT, DETAILED EXPLANATIONS, AND PROPER FORMATION (Markdown bullet points allowed inside content).
         
         STRUCTURE:
         {{
@@ -83,8 +83,8 @@ async def generate_course(file: UploadFile = File(...)):
         response = groq_client.chat.completions.create(
             messages=[{"role": "user", "content": prompt}],
             model="llama-3.1-8b-instant",
-            temperature=0.1,
-            max_tokens=1500,
+            temperature=0.2,
+            max_tokens=3000,
         )
 
         raw_content = response.choices[0].message.content
