@@ -97,12 +97,46 @@ export default function LoginPage() {
         <ThemeToggle />
       </div>
 
-      {/* Glassmorphic Card */}
+      {/* Hero Branding (Desktop Only) */}
+      <div className="hidden lg:flex flex-col justify-center absolute left-0 top-0 bottom-0 w-1/2 px-16 xl:px-24 z-20 pointer-events-none">
+        <div className="pointer-events-auto">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-xs font-bold tracking-widest uppercase mb-6 border border-indigo-100 dark:border-indigo-800">
+            <span className="w-2 h-2 rounded-full bg-indigo-600 dark:bg-indigo-400 animate-pulse" />
+            HA the Legacy
+          </div>
+          <h2 className="text-5xl xl:text-6xl font-black text-slate-900 dark:text-white leading-[1.1] tracking-tight mb-6">
+            Let's build <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-500 to-amber-500 italic font-serif pr-2">something worth shipping.</span>
+          </h2>
+          <p className="text-slate-500 dark:text-slate-400 text-lg max-w-md mb-8">
+            Open to robotics, embedded, and software collaborations.
+          </p>
+          
+          <div className="flex items-center gap-4 font-semibold text-sm">
+            <a 
+              href="mailto:Husnain.ajmal999@gmail.com" 
+              className="px-8 py-3.5 rounded-full bg-gradient-to-r from-yellow-500 to-amber-500 text-white shadow-lg shadow-yellow-500/25 hover:scale-105 active:scale-95 transition-all"
+            >
+              Email Me &rarr;
+            </a>
+            <a 
+              href="https://github.com/husnain0x" 
+              target="_blank" 
+              rel="noreferrer"
+              className="px-8 py-3.5 rounded-full bg-white dark:bg-slate-900 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-sm hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
+            >
+              GitHub ↗
+            </a>
+          </div>
+        </div>
+      </div>
+
+      {/* Glassmorphic Card (Shifted right on desktop) */}
       <motion.div
         initial={{ opacity: 0, y: 20, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.5, ease: 'easeOut' }}
-        className="relative z-10 w-full max-w-[440px] mx-4 p-8 sm:p-10 bg-white/70 dark:bg-slate-900/60 backdrop-blur-2xl border border-white/40 dark:border-slate-800 shadow-[0_8px_32px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)] rounded-[2rem]"
+        className="relative z-10 w-full max-w-[440px] mx-4 lg:ml-auto lg:mr-[10%] p-8 sm:p-10 bg-white/70 dark:bg-slate-900/60 backdrop-blur-2xl border border-white/40 dark:border-slate-800 shadow-[0_8px_32px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)] rounded-[2rem]"
       >
         {/* Header */}
         <div className="text-center mb-8">
