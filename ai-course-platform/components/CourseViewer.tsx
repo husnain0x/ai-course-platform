@@ -213,7 +213,7 @@ export default function CourseViewer({ course, chapters, userId }: any) {
                     ? 'bg-slate-900 dark:bg-indigo-600 text-white rounded-tr-sm'
                     : 'bg-white dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700 text-slate-800 dark:text-slate-200 rounded-tl-sm'
                 }`}>
-                  <ReactMarkdown className="prose prose-sm dark:prose-invert max-w-none">{msg.content}</ReactMarkdown>
+                  <div className="prose prose-sm dark:prose-invert max-w-none"><ReactMarkdown>{msg.content}</ReactMarkdown></div>
                 </div>
               </div>
             ))
