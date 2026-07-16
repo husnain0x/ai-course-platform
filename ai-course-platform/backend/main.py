@@ -50,23 +50,40 @@ async def generate_course(file: UploadFile = File(...)):
             if len(extracted_text) > 80000:
                 extracted_text = extracted_text[:80000]
         elif file.filename.lower().endswith('.doc'):
-            # Use pypandoc to convert .doc to plain text via a temporary file
+            # Pure Python extraction for legacy .doc binary format (OLE compound document)
+            # Find printable character sequences to extract the text content
             try:
-                import tempfile, os
-                import pypandoc
-                # Write the uploaded bytes to a temp .doc file
-                with tempfile.NamedTemporaryFile(delete=False, suffix='.doc') as tmp_file:
-                    tmp_file.write(file_bytes)
-                    tmp_path = tmp_file.name
-                # Convert the file to plain text
-                extracted_text = pypandoc.convert_file(tmp_path, 'plain')
-                # Clean up the temporary file
-                os.unlink(tmp_path)
+                import re
+                
+                # Try UTF-16-LE first (common for Word docs)
+                utf16_text = file_bytes.decode('utf-16le', errors='ignore')
+                # Keep lines with mostly printable characters and some minimum length
+                utf16_paras = []
+                for line in re.split(r'[\r\n\x00]+', utf16_text):
+                    cleaned = "".join(c for c in line if c.isprintable())
+                    cleaned = re.sub(r'\s+', ' ', cleaned).strip()
+                    # Filter out binary metadata noise (e.g. font names, author info)
+                    if len(cleaned) > 20 and not cleaned.startswith(('Normal', 'Microsoft', 'Times New', 'Calibri', 'Arial')):
+                        utf16_paras.append(cleaned)
+                
+                extracted_text = '\n'.join(utf16_paras)
+                
+                # If we got very little text, fallback to latin-1
+                if len(extracted_text) < 100:
+                    latin_text = file_bytes.decode('latin-1', errors='ignore')
+                    latin_paras = []
+                    for line in re.split(r'[\r\n\x00\x01-\x1f\x7f-\x9f]+', latin_text):
+                        cleaned = "".join(c for c in line if c.isprintable())
+                        cleaned = re.sub(r'\s+', ' ', cleaned).strip()
+                        if len(cleaned) > 20 and not cleaned.startswith(('Normal', 'Microsoft', 'Times New', 'Calibri', 'Arial')):
+                            latin_paras.append(cleaned)
+                    extracted_text = '\n'.join(latin_paras)
+                
                 # Truncate if too long
                 if len(extracted_text) > 80000:
                     extracted_text = extracted_text[:80000]
             except Exception as e:
-                raise HTTPException(status_code=500, detail=f'Doc conversion failed: {e}')
+                raise HTTPException(status_code=500, detail=f'Legacy doc extraction failed: {e}')
         else:
             raise HTTPException(status_code=400, detail='Unsupported file type.')        
         # 2. SPEED PROMPT: We use Llama 3.1 8B which is nearly instant
