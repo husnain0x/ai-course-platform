@@ -131,7 +131,7 @@ export default function CourseViewer({ course, chapters, userId }: any) {
       </div>
 
       {/* MAIN CONTENT AREA */}
-      <div className={`flex-1 overflow-y-auto p-6 md:p-16 pt-24 lg:pt-16 scroll-smooth transition-all ${isChatOpen ? 'lg:mr-[400px]' : 'mr-0'}`}>
+      <div className="flex-1 overflow-y-auto p-6 md:p-16 pt-24 lg:pt-16 scroll-smooth transition-all duration-300">
         <div className="max-w-3xl mx-auto pb-20">
           {activeLesson ? (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -163,34 +163,91 @@ export default function CourseViewer({ course, chapters, userId }: any) {
         </div>
       </div>
 
-      {/* CHAT - Responsive */}
-      <button onClick={() => setIsChatOpen(!isChatOpen)} className="fixed bottom-6 right-6 z-50 bg-indigo-600 text-white p-4 rounded-full shadow-2xl hover:scale-110 transition-transform flex items-center gap-2">
-        {isChatOpen ? <X className="w-6 h-6" /> : <><Sparkles className="w-5 h-5" /> <span className="hidden md:inline font-bold">Ask AI</span></>}
+      {/* FLOATING CHAT BUTTON */}
+      <button
+        onClick={() => setIsChatOpen(!isChatOpen)}
+        className={`fixed bottom-6 right-6 z-[60] p-4 rounded-full shadow-2xl transition-all duration-500 transform hover:scale-110 flex items-center justify-center border border-white/20
+          ${isChatOpen ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 rotate-90' : 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white'}`}
+      >
+        {isChatOpen ? <X className="w-6 h-6" /> : <Sparkles className="w-6 h-6" />}
       </button>
 
+      {/* FLOATING MINI CHAT WINDOW */}
       <div className={`
-        fixed top-0 right-0 h-full w-full md:w-[400px] bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 shadow-2xl z-50 transition-transform duration-500
-        ${isChatOpen ? 'translate-x-0' : 'translate-x-full'}
+        fixed bottom-24 right-6 z-50
+        w-[350px] md:w-[380px] h-[500px] max-h-[70vh]
+        bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl
+        border border-slate-200/60 dark:border-slate-800
+        shadow-[0_20px_50px_rgba(0,0,0,0.15)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.4)]
+        rounded-[2rem] overflow-hidden flex flex-col
+        transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]
+        max-[640px]:w-[92vw] max-[640px]:right-[4vw] max-[640px]:bottom-20
+        ${isChatOpen ? 'scale-100 opacity-100 translate-y-0' : 'scale-90 opacity-0 translate-y-10 pointer-events-none'}
       `}>
-        {/* Chat logic here (Same as before but with better mobile padding) */}
-        <div className="flex flex-col h-full">
-           <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
-             <h3 className="font-bold text-slate-900 dark:text-white flex items-center gap-2"><Bot className="w-5 h-5 text-indigo-500" /> AI Tutor</h3>
-             <button onClick={() => setIsChatOpen(false)}><X className="w-5 h-5 text-slate-400" /></button>
-           </div>
-           <div className="flex-1 overflow-y-auto p-6 space-y-4">
-             {chatHistory.map((m, i) => (
-               <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                 <div className={`max-w-[85%] p-4 rounded-2xl text-sm ${m.role === 'user' ? 'bg-indigo-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-white'}`}>
-                    <ReactMarkdown>{m.content}</ReactMarkdown>
-                 </div>
-               </div>
-             ))}
-           </div>
-           <form onSubmit={handleSendMessage} className="p-4 border-t border-slate-100 dark:border-slate-800 flex gap-2">
-              <input type="text" value={chatInput} onChange={e => setChatInput(e.target.value)} placeholder="Ask anything..." className="flex-1 bg-slate-50 dark:bg-slate-800 border-none rounded-full px-5 py-3 text-sm focus:ring-2 focus:ring-indigo-500" />
-              <button type="submit" className="bg-indigo-600 text-white p-3 rounded-full"><Send className="w-4 h-4" /></button>
-           </form>
+
+        {/* Compact Header */}
+        <div className="px-6 py-4 border-b border-slate-200/50 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 flex items-center gap-3">
+          <div className="bg-gradient-to-br from-indigo-500 to-violet-500 p-2 rounded-xl text-white">
+            <Bot className="w-4 h-4" />
+          </div>
+          <div>
+            <h3 className="font-bold text-sm text-slate-900 dark:text-white">AI Tutor</h3>
+            <div className="flex items-center gap-1">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider">Active</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Chat Messages */}
+        <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 bg-slate-50/50 dark:bg-slate-950/20">
+          {chatHistory.length === 0 ? (
+            <div className="h-full flex flex-col items-center justify-center text-center px-4 opacity-60">
+              <Sparkles className="w-8 h-8 text-indigo-400 mb-2" />
+              <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Ask me anything about this lesson!</p>
+            </div>
+          ) : (
+            chatHistory.map((msg, i) => (
+              <div key={i} className={`flex gap-2 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+                <div className={`max-w-[85%] p-3 rounded-2xl text-xs leading-relaxed shadow-sm ${
+                  msg.role === 'user'
+                    ? 'bg-slate-900 dark:bg-indigo-600 text-white rounded-tr-sm'
+                    : 'bg-white dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700 text-slate-800 dark:text-slate-200 rounded-tl-sm'
+                }`}>
+                  <ReactMarkdown className="prose prose-sm dark:prose-invert max-w-none">{msg.content}</ReactMarkdown>
+                </div>
+              </div>
+            ))
+          )}
+          {isChatting && (
+            <div className="flex gap-2">
+              <div className="bg-white dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700 p-3 rounded-2xl rounded-tl-sm shadow-sm">
+                <Loader2 className="w-3 h-3 animate-spin text-indigo-600" />
+              </div>
+            </div>
+          )}
+          <div ref={chatEndRef} />
+        </div>
+
+        {/* Slim Chat Input */}
+        <div className="p-4 bg-white/80 dark:bg-slate-900/80 border-t border-slate-200/50 dark:border-slate-800 backdrop-blur-md">
+          <form onSubmit={handleSendMessage} className="relative flex items-center">
+            <input
+              type="text"
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+              placeholder="Ask a question..."
+              className="w-full pl-4 pr-10 py-2.5 bg-slate-100/50 dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700 text-xs text-slate-900 dark:text-white rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition-all"
+              disabled={isChatting}
+            />
+            <button
+              type="submit"
+              disabled={isChatting || !chatInput.trim()}
+              className="absolute right-1.5 bg-indigo-600 text-white p-1.5 rounded-full hover:bg-indigo-700 transition-all disabled:opacity-50"
+            >
+              <Send className="w-3.5 h-3.5" />
+            </button>
+          </form>
         </div>
       </div>
     </div>
