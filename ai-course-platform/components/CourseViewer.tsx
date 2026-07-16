@@ -145,7 +145,7 @@ export default function CourseViewer({ course, chapters, userId }: any) {
               </div>
 
               <h1 className="text-3xl md:text-5xl font-extrabold text-slate-900 dark:text-white mb-8 tracking-tight">{activeLesson.title}</h1>
-              <div className="prose prose-indigo dark:prose-invert prose-lg max-w-none text-slate-700 dark:text-slate-300">
+              <div className="prose prose-indigo dark:prose-invert prose-lg max-w-none text-slate-700 dark:text-slate-300 whitespace-pre-wrap">
                 <ReactMarkdown>{activeLesson.content}</ReactMarkdown>
               </div>
               
