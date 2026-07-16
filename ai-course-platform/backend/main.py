@@ -29,20 +29,46 @@ def read_root():
 
 @app.post("/api/generate-course")
 async def generate_course(file: UploadFile = File(...)):
-    if not file.filename.endswith(".pdf"):
-        raise HTTPException(status_code=400, detail="Only PDF files are allowed.")
+    if not (file.filename.lower().endswith('.pdf') or file.filename.lower().endswith('.docx') or file.filename.lower().endswith('.doc')):
+        raise HTTPException(status_code=400, detail='Only PDF, DOCX, or DOC files are allowed.')
     
     try:
         file_bytes = await file.read()
-        doc = fitz.open(stream=file_bytes, filetype="pdf")
-        
-        # 1. Limit extraction for speed (Reading first 20-30 pages is plenty for a course structure)
-        extracted_text = ""
-        for page in doc:
-            extracted_text += page.get_text()
-            if len(extracted_text) > 80000: 
-                break
-        
+        # Determine file type and extract text
+        if file.filename.lower().endswith('.pdf'):
+            doc = fitz.open(stream=file_bytes, filetype='pdf')
+            extracted_text = ''
+            for page in doc:
+                extracted_text += page.get_text()
+                if len(extracted_text) > 80000:
+                    break
+        elif file.filename.lower().endswith('.docx'):
+            import io
+            from docx import Document
+            document = Document(io.BytesIO(file_bytes))
+            extracted_text = '\n'.join([para.text for para in document.paragraphs])
+            if len(extracted_text) > 80000:
+                extracted_text = extracted_text[:80000]
+        elif file.filename.lower().endswith('.doc'):
+            # Use pypandoc to convert .doc to plain text via a temporary file
+            try:
+                import tempfile, os
+                import pypandoc
+                # Write the uploaded bytes to a temp .doc file
+                with tempfile.NamedTemporaryFile(delete=False, suffix='.doc') as tmp_file:
+                    tmp_file.write(file_bytes)
+                    tmp_path = tmp_file.name
+                # Convert the file to plain text
+                extracted_text = pypandoc.convert_file(tmp_path, 'plain')
+                # Clean up the temporary file
+                os.unlink(tmp_path)
+                # Truncate if too long
+                if len(extracted_text) > 80000:
+                    extracted_text = extracted_text[:80000]
+            except Exception as e:
+                raise HTTPException(status_code=500, detail=f'Doc conversion failed: {e}')
+        else:
+            raise HTTPException(status_code=400, detail='Unsupported file type.')        
         # 2. SPEED PROMPT: We use Llama 3.1 8B which is nearly instant
         prompt = f"""
         Create a detailed E-Course from this text. 
