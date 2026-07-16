@@ -290,17 +290,15 @@ export default function LoginPage() {
       </motion.div>
 
       {/* Footer */}
-      <div className="absolute bottom-6 left-0 right-0 text-center text-[11px] font-medium text-slate-400 dark:text-slate-600 space-y-1.5">
-        <p className="flex items-center justify-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
-          Crafted with <span className="text-red-500">❤️</span> by <span className="font-bold text-slate-700 dark:text-slate-300">Husnain Ajmal</span>
-        </p>
-        <p>© {new Date().getFullYear()} E-Course AI Platform. All rights reserved.</p>
-        <p className="space-x-3">
-          <button className="hover:text-slate-600 dark:hover:text-slate-400 transition-colors">Terms</button>
-          <span>·</span>
-          <button className="hover:text-slate-600 dark:hover:text-slate-400 transition-colors">Privacy</button>
-          <span>·</span>
-          <button className="hover:text-slate-600 dark:hover:text-slate-400 transition-colors">Support</button>
+      <div className="absolute bottom-6 left-0 right-0 text-center text-[11px] font-medium text-slate-400 dark:text-slate-500 space-y-4">
+        <div className="flex justify-center gap-6 text-[10px] uppercase tracking-widest font-bold text-slate-500 dark:text-slate-400">
+          <a href="https://github.com/husnain0x" target="_blank" rel="noreferrer" className="hover:text-slate-900 dark:hover:text-white transition-colors">GitHub</a>
+          <a href="#" className="hover:text-slate-900 dark:hover:text-white transition-colors">Instagram</a>
+          <a href="#" className="hover:text-slate-900 dark:hover:text-white transition-colors">Discord</a>
+          <a href="#" className="hover:text-slate-900 dark:hover:text-white transition-colors">Email</a>
+        </div>
+        <p className="opacity-60">
+          © {new Date().getFullYear()} Husnain Ajmal - Robotics & AI Engineer - Built & deployed on Vercel
         </p>
       </div>
     </div>
