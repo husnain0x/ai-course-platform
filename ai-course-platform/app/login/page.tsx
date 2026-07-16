@@ -116,7 +116,7 @@ export default function LoginPage() {
               <BookOpen className="w-8 h-8 text-white" />
             </div>
           </motion.div>
-          <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+          <h1 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-600 tracking-tighter drop-shadow-sm">
             E-Course AI
           </h1>
           <p className="text-slate-500 dark:text-slate-400 mt-1.5 text-sm font-medium">
@@ -290,7 +290,10 @@ export default function LoginPage() {
       </motion.div>
 
       {/* Footer */}
-      <div className="absolute bottom-6 left-0 right-0 text-center text-[11px] font-medium text-slate-400 dark:text-slate-600 space-y-1">
+      <div className="absolute bottom-6 left-0 right-0 text-center text-[11px] font-medium text-slate-400 dark:text-slate-600 space-y-1.5">
+        <p className="flex items-center justify-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+          Crafted with <span className="text-red-500">❤️</span> by <span className="font-bold text-slate-700 dark:text-slate-300">Husnain Ajmal</span>
+        </p>
         <p>© {new Date().getFullYear()} E-Course AI Platform. All rights reserved.</p>
         <p className="space-x-3">
           <button className="hover:text-slate-600 dark:hover:text-slate-400 transition-colors">Terms</button>
