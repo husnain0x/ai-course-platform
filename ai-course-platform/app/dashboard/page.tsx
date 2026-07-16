@@ -57,10 +57,11 @@ export default async function DashboardPage() {
         {/* Professional Footer */}
         <footer className="mt-20 pt-10 border-t border-slate-200/50 dark:border-slate-800 text-center pb-8">
           <div className="flex justify-center gap-6 text-[10px] uppercase tracking-widest font-bold text-slate-500 dark:text-slate-400 mb-6">
-            <a href="https://github.com/husnain0x" target="_blank" rel="noreferrer" className="hover:text-slate-900 dark:hover:text-white transition-colors">GitHub</a>
-            <a href="#" className="hover:text-slate-900 dark:hover:text-white transition-colors">Instagram</a>
-            <a href="#" className="hover:text-slate-900 dark:hover:text-white transition-colors">Discord</a>
-            <a href="#" className="hover:text-slate-900 dark:hover:text-white transition-colors">Email</a>
+            <a href="https://github.com/husnain0x" target="_blank" rel="noreferrer" className="hover:text-slate-900 dark:hover:text-white hover:-translate-y-0.5 transition-transform">GitHub</a>
+            <a href="https://www.linkedin.com/in/husnain-ajmal" target="_blank" rel="noreferrer" className="hover:text-[#0A66C2] dark:hover:text-blue-400 hover:-translate-y-0.5 transition-transform">LinkedIn</a>
+            <a href="#" className="hover:text-pink-600 dark:hover:text-pink-400 hover:-translate-y-0.5 transition-transform">Instagram</a>
+            <a href="#" className="hover:text-indigo-600 dark:hover:text-indigo-400 hover:-translate-y-0.5 transition-transform">Discord</a>
+            <a href="mailto:Husnain.ajmal999@gmail.com" className="hover:text-yellow-600 dark:hover:text-yellow-400 hover:-translate-y-0.5 transition-transform">Email</a>
           </div>
           <p className="text-[11px] font-medium text-slate-400 dark:text-slate-500 opacity-80">
             © {new Date().getFullYear()} Husnain Ajmal - Robotics & AI Engineer - Built & deployed on Vercel

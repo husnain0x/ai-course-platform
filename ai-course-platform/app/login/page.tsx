@@ -112,10 +112,10 @@ export default function LoginPage() {
             Open to robotics, embedded, and software collaborations.
           </p>
           
-          <div className="flex items-center gap-4 font-semibold text-sm">
+          <div className="flex flex-wrap items-center gap-4 font-semibold text-sm">
             <a 
               href="mailto:Husnain.ajmal999@gmail.com" 
-              className="px-8 py-3.5 rounded-full bg-gradient-to-r from-yellow-500 to-amber-500 text-white shadow-lg shadow-yellow-500/25 hover:scale-105 active:scale-95 transition-all"
+              className="px-8 py-3.5 rounded-full bg-gradient-to-r from-yellow-500 to-amber-500 text-white shadow-lg shadow-yellow-500/25 hover:scale-105 active:scale-95 transition-all animate-bounce-slow"
             >
               Email Me &rarr;
             </a>
@@ -126,6 +126,14 @@ export default function LoginPage() {
               className="px-8 py-3.5 rounded-full bg-white dark:bg-slate-900 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-sm hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
             >
               GitHub ↗
+            </a>
+            <a 
+              href="https://www.linkedin.com/in/husnain-ajmal" 
+              target="_blank" 
+              rel="noreferrer"
+              className="px-8 py-3.5 rounded-full bg-[#0A66C2] text-white shadow-lg shadow-blue-500/25 hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
+            >
+              LinkedIn ↗
             </a>
           </div>
         </div>
@@ -326,10 +334,11 @@ export default function LoginPage() {
       {/* Footer */}
       <div className="absolute bottom-6 left-0 right-0 text-center text-[11px] font-medium text-slate-400 dark:text-slate-500 space-y-4">
         <div className="flex justify-center gap-6 text-[10px] uppercase tracking-widest font-bold text-slate-500 dark:text-slate-400">
-          <a href="https://github.com/husnain0x" target="_blank" rel="noreferrer" className="hover:text-slate-900 dark:hover:text-white transition-colors">GitHub</a>
-          <a href="#" className="hover:text-slate-900 dark:hover:text-white transition-colors">Instagram</a>
-          <a href="#" className="hover:text-slate-900 dark:hover:text-white transition-colors">Discord</a>
-          <a href="#" className="hover:text-slate-900 dark:hover:text-white transition-colors">Email</a>
+          <a href="https://github.com/husnain0x" target="_blank" rel="noreferrer" className="hover:text-slate-900 dark:hover:text-white hover:-translate-y-0.5 transition-transform">GitHub</a>
+          <a href="https://www.linkedin.com/in/husnain-ajmal" target="_blank" rel="noreferrer" className="hover:text-[#0A66C2] dark:hover:text-blue-400 hover:-translate-y-0.5 transition-transform">LinkedIn</a>
+          <a href="#" className="hover:text-pink-600 dark:hover:text-pink-400 hover:-translate-y-0.5 transition-transform">Instagram</a>
+          <a href="#" className="hover:text-indigo-600 dark:hover:text-indigo-400 hover:-translate-y-0.5 transition-transform">Discord</a>
+          <a href="mailto:Husnain.ajmal999@gmail.com" className="hover:text-yellow-600 dark:hover:text-yellow-400 hover:-translate-y-0.5 transition-transform">Email</a>
         </div>
         <p className="opacity-60">
           © {new Date().getFullYear()} Husnain Ajmal - Robotics & AI Engineer - Built & deployed on Vercel
