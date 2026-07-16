@@ -14,7 +14,7 @@ export default function QuizSection({ lessonContent }: { lessonContent: string }
   const generateQuiz = async () => {
     setLoading(true)
     try {
-      const response = await fetch('http://localhost:8000/api/generate-quiz', {
+      const response = await fetch('https://ai-course-platform-it0p.onrender.com/api/generate-quiz', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ context: lessonContent }),
       })
