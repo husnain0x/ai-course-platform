@@ -185,13 +185,30 @@ export default function CourseViewer({ course, chapters, userId }: any) {
                 {/* 3. AI Mind Map Button */}
                 <button 
                   onClick={async () => {
-                    const res = await fetch('https://ai-course-platform-i10p.onrender.com/api/diagram', {
-                      method: 'POST', headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ context: activeLesson.content })
-                    });
-                    const data = await res.json();
-                    setActiveLesson({ ...activeLesson, content: activeLesson.content + "\n\n### AI Generated Mind Map\n" + data.diagram });
+                    const btn = document.getElementById('mind-map-btn');
+                    if (btn) btn.innerText = '🗺️ Generating...'; // Show loading text
+                    
+                    try {
+                      const res = await fetch('https://ai-course-platform-i10p.onrender.com/api/diagram', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ context: activeLesson.content })
+                      });
+                      const data = await res.json();
+                      
+                      // Strip existing backticks and enforce a perfect Monospace Markdown block!
+                      const cleanDiagram = data.diagram.replace(/```[a-zA-Z]*\n?/g, '').replace(/```/g, '');
+                      
+                      setActiveLesson({ 
+                        ...activeLesson, 
+                        content: activeLesson.content + "\n\n### 🗺️ AI Generated Mind Map\n\n```text\n" + cleanDiagram + "\n```\n" 
+                      });
+                    } catch (e) {
+                      alert("Failed to generate mind map.");
+                    } finally {
+                      if (btn) btn.innerText = '🗺️ Generate Mind Map';
+                    }
                   }}
+                  id="mind-map-btn"
                   className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold px-3 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition"
                 >
                   🗺️ Generate Mind Map
