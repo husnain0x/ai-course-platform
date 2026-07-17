@@ -60,15 +60,28 @@ export default function CourseViewer({ course, chapters, userId }: any) {
     e.preventDefault()
     if (!chatInput.trim() || isChatting) return
     const userMsg = { role: 'user', content: chatInput }; setChatHistory((prev) => [...prev, userMsg]); setChatInput(''); setIsChatting(true)
+    
+    // Construct the entire course text for the RAG Vector DB
+    const courseData = chapters.map((c: any) => 
+      `Chapter: ${c.title}\n\n` + c.lessons.map((l: any) => `Lesson: ${l.title}\n${l.content}`).join('\n\n')
+    ).join('\n\n')
+
     try {
-      const response = await fetch('https://ai-course-platform-i10p.onrender.com/api/chat', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: [...chatHistory, userMsg], context: activeLesson.content }),
+      const response = await fetch('https://ai-course-platform-i10p.onrender.com/api/rag-chat', {
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          messages: [...chatHistory, userMsg], 
+          course_data: courseData 
+        }),
       })
       const data = await response.json()
       setChatHistory((prev) => [...prev, { role: 'assistant', content: data.reply }])
-    } catch (error) { setChatHistory((prev) => [...prev, { role: 'assistant', content: "Error connecting to AI." }]) }
-    finally { setIsChatting(false) }
+    } catch (error) { 
+      setChatHistory((prev) => [...prev, { role: 'assistant', content: "Error connecting to AI." }]) 
+    } finally { 
+      setIsChatting(false) 
+    }
   }
 
   return (

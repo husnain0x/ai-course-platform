@@ -8,6 +8,12 @@ import json
 import re
 from groq import Groq
 from dotenv import load_dotenv
+from sentence_transformers import SentenceTransformer
+import faiss
+import numpy as np
+
+# Load the embedding model globally so it doesn't redownload every time
+embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
 
 # Load environment variables
 load_dotenv()
@@ -281,4 +287,59 @@ async def generate_diagram(request: DiagramRequest):
         )
         return {"diagram": response.choices[0].message.content}
     except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# --- RAG & FAISS VECTOR DATABASE ENDPOINT ---
+
+class RAGRequest(BaseModel):
+    messages: list
+    course_data: str # The entire text of the whole course
+
+@app.post("/api/rag-chat")
+async def rag_chat(request: RAGRequest):
+    try:
+        # 1. RAG Chunking (Semantic Splitting)
+        # We split the massive course into 500-character chunks
+        chunk_size = 500
+        chunks = [request.course_data[i:i+chunk_size] for i in range(0, len(request.course_data), chunk_size)]
+        
+        # 2. Generate Vector Embeddings (Convert text to numbers)
+        embeddings = embedding_model.encode(chunks)
+        
+        # 3. Store in FAISS Vector Database!
+        dimension = embeddings.shape[1]
+        index = faiss.IndexFlatL2(dimension)
+        index.add(np.array(embeddings))
+        
+        # 4. Semantic Search
+        # We convert the user's latest question into a vector and search the FAISS DB
+        user_query = request.messages[-1]["content"]
+        query_vector = embedding_model.encode([user_query])
+        
+        # Retrieve the Top 3 most relevant chunks from anywhere in the course
+        distances, indices = index.search(np.array(query_vector), k=3)
+        retrieved_context = "\n".join([chunks[i] for i in indices[0] if i < len(chunks)])
+        
+        # 5. Retrieval-Augmented Generation (RAG) with Groq
+        system_prompt = f"""
+        You are a highly intelligent AI Course Tutor. 
+        Answer the user's question based ONLY on the following semantic matches retrieved from the FAISS Vector Database.
+        If the answer isn't in the retrieved context, say "I don't have enough information in this course to answer that."
+        
+        RETRIEVED COURSE CONTEXT:
+        {retrieved_context}
+        """
+        
+        messages_for_groq = [{"role": "system", "content": system_prompt}] + request.messages
+        
+        response = groq_client.chat.completions.create(
+            messages=messages_for_groq,
+            model="llama-3.1-8b-instant",
+            temperature=0.3,
+        )
+        
+        return {"reply": response.choices[0].message.content}
+
+    except Exception as e:
+        print(f"RAG Error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))

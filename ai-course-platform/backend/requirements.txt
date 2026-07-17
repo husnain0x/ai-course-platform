@@ -25,3 +25,7 @@ typing_extensions==4.16.0
 urllib3==2.7.0
 uvicorn==0.51.0
 python-docx==1.1.2
+faiss-cpu
+sentence-transformers
+numpy
+
