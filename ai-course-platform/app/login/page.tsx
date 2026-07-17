@@ -20,29 +20,19 @@ export default function LoginPage() {
   const router = useRouter()
   const supabase = createClient()
 
-  // --- AUTO-LOGIN & SESSION CHECK ---
+  // --- SAFE AUTO-LOGIN CHECK ---
   useEffect(() => {
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession()
       
       if (session) {
-        // If 1-hour strict logout is active and time is up, log them out.
-        const loginTime = new Date(session.user.updated_at || session.user.created_at).getTime()
-        const now = new Date().getTime()
-        const oneHour = 60 * 60 * 1000 
-        
-        if (now - loginTime > oneHour && localStorage.getItem('rememberMe') !== 'true') {
-          await supabase.auth.signOut()
-          setError("Session expired (1-hour limit). Please log in again.")
-          setLoading(false)
-        } else {
-          // Valid session! Redirect instantly!
-          router.push('/dashboard')
-        }
+        // Valid session! Redirect instantly!
+        router.push('/dashboard')
       } else {
-        setLoading(false) // No session, show the login form
+        setLoading(false) // No session, show the login form safely
       }
     }
+    
     checkSession()
   }, [])
 

@@ -59,23 +59,34 @@ export default function CourseViewer({ course, chapters, userId }: any) {
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!chatInput.trim() || isChatting) return
-    const userMsg = { role: 'user', content: chatInput }; setChatHistory((prev) => [...prev, userMsg]); setChatInput(''); setIsChatting(true)
-    
+
+    const userMsg = { role: 'user', content: chatInput }
+    setChatHistory((prev) => [...prev, userMsg])
+    setChatInput('')
+    setIsChatting(true)
+
     try {
+      await supabase.from('chat_history').insert({ user_id: userId, lesson_id: activeLesson.id, role: 'user', content: userMsg.content })
+
+      // Using your EXACT Render Live URL, and the standard chat endpoint!
       const response = await fetch('https://ai-course-platform-i10p.onrender.com/api/chat', {
-        method: 'POST', 
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          messages: [...chatHistory, userMsg], 
+          messages: [...chatHistory, userMsg].map(m => ({role: m.role, content: m.content})), 
           context: activeLesson.content 
         }),
       })
+
+      if (!response.ok) throw new Error("Failed to get AI response")
       const data = await response.json()
+      
+      await supabase.from('chat_history').insert({ user_id: userId, lesson_id: activeLesson.id, role: 'assistant', content: data.reply })
       setChatHistory((prev) => [...prev, { role: 'assistant', content: data.reply }])
-    } catch (error) { 
-      setChatHistory((prev) => [...prev, { role: 'assistant', content: "Error connecting to AI." }]) 
-    } finally { 
-      setIsChatting(false) 
+    } catch (error) {
+      setChatHistory((prev) => [...prev, { role: 'assistant', content: "Sorry, I had trouble connecting. Make sure the backend is awake!" }])
+    } finally {
+      setIsChatting(false)
     }
   }
 
