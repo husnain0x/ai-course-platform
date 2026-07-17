@@ -12,50 +12,45 @@ export default function LoginPage() {
   const [mode, setMode] = useState<'signin' | 'signup'>('signin')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  
-  // New Checkbox States
   const [agreed, setAgreed] = useState(false)
-  const [rememberMe, setRememberMe] = useState(false)
-  
-  const [loading, setLoading] = useState(false)
+  const [rememberMe, setRememberMe] = useState(true) // Default to true
+  const [loading, setLoading] = useState(true) // Start loading to check session instantly
   const [error, setError] = useState<string | null>(null)
+  
   const router = useRouter()
   const supabase = createClient()
 
-  // --- 1 HOUR STRICT LOGOUT LOGIC ---
+  // --- AUTO-LOGIN & SESSION CHECK ---
   useEffect(() => {
-    // If the user did NOT check "Remember Me" previously, we set a 1-hour expiration timer
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession()
+      
       if (session) {
+        // If 1-hour strict logout is active and time is up, log them out.
         const loginTime = new Date(session.user.updated_at || session.user.created_at).getTime()
         const now = new Date().getTime()
-        const oneHour = 60 * 60 * 1000 // 1 hour in milliseconds
-
-        // If 1 hour has passed and they didn't check remember me, force logout
+        const oneHour = 60 * 60 * 1000 
+        
         if (now - loginTime > oneHour && localStorage.getItem('rememberMe') !== 'true') {
           await supabase.auth.signOut()
-          setError("Your session has expired (1 hour limit). Please log in again.")
-        } else if (localStorage.getItem('rememberMe') !== 'true') {
-          // Set a timer to log them out when the hour hits
-          const timeLeft = oneHour - (now - loginTime)
-          const logoutTimer = setTimeout(async () => {
-            await supabase.auth.signOut()
-            window.location.reload() // Force reload to show login screen
-          }, timeLeft)
-          return () => clearTimeout(logoutTimer)
+          setError("Session expired (1-hour limit). Please log in again.")
+          setLoading(false)
+        } else {
+          // Valid session! Redirect instantly!
+          router.push('/dashboard')
         }
+      } else {
+        setLoading(false) // No session, show the login form
       }
     }
     checkSession()
-  }, [supabase])
+  }, [router, supabase])
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    // Validation for Policies
     if (mode === 'signup' && !agreed) {
-      setError("You must agree to the Terms of Service and Privacy Policy to create an account.")
+      setError("You must agree to the Terms of Service to create an account.")
       return
     }
 
@@ -69,16 +64,17 @@ export default function LoginPage() {
 
       if (authError) throw authError
       
-      // Save their "Remember Me" preference for the session logic
+      // Save their "Remember Me" preference
       if (mode === 'signin') {
         localStorage.setItem('rememberMe', rememberMe ? 'true' : 'false')
+      } else {
+        localStorage.setItem('rememberMe', 'true') 
       }
 
       router.push('/dashboard')
       router.refresh()
     } catch (err: any) {
       setError(err.message)
-    } finally {
       setLoading(false)
     }
   }
@@ -97,7 +93,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen w-full flex flex-col lg:flex-row items-center justify-center overflow-hidden bg-[#FAFAFA] dark:bg-slate-950 relative font-sans transition-colors duration-500">
       
-      {/* Absolute Theme Toggle at Top Right */}
+      {/* Absolute Theme Toggle */}
       <div className="absolute top-6 right-6 z-50 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md rounded-full border border-slate-200 dark:border-slate-800 shadow-sm p-1">
         <ThemeToggle />
       </div>
@@ -105,7 +101,7 @@ export default function LoginPage() {
       {/* Animated Background Gradients */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-400/30 dark:bg-indigo-600/20 rounded-full blur-[120px] animate-pulse-slow"></div>
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-violet-400/30 dark:bg-violet-600/20 rounded-full blur-[120px] animate-pulse-slow animation-delay-2000"></div>
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-violet-400/30 dark:bg-violet-600/20 rounded-full blur-[120px] animate-pulse-slow" style={{ animationDelay: '2s' }}></div>
       </div>
 
       {/* Mobile Branding (Visible only on small screens) */}
@@ -135,13 +131,13 @@ export default function LoginPage() {
           </p>
           
           <div className="flex flex-wrap items-center gap-4 font-semibold text-sm">
-            <a href="mailto:Husnain.ajmal999@gmail.com" className="px-8 py-3.5 rounded-full bg-gradient-to-r from-yellow-500 to-amber-500 text-white shadow-lg shadow-yellow-500/25 hover:scale-105 active:scale-95 transition-all animate-bounce-slow">
+            <a href="mailto:Husnain.ajmal999@gmail.com" className="px-8 py-3.5 rounded-full bg-gradient-to-r from-yellow-500 to-amber-500 text-white shadow-lg hover:scale-105 active:scale-95 transition-all">
               Email Me &rarr;
             </a>
-            <a href="https://github.com/husnain0x" target="_blank" rel="noreferrer" className="px-8 py-3.5 rounded-full bg-white dark:bg-slate-900 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-sm hover:scale-105 active:scale-95 transition-all flex items-center gap-2">
+            <a href="https://github.com/husnain0x" target="_blank" rel="noreferrer" className="px-8 py-3.5 rounded-full bg-white dark:bg-slate-900 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-800 shadow-sm hover:scale-105 active:scale-95 transition-all flex items-center gap-2">
               GitHub ↗
             </a>
-            <a href="https://www.linkedin.com/in/husnain-ajmal" target="_blank" rel="noreferrer" className="px-8 py-3.5 rounded-full bg-[#0A66C2] text-white shadow-lg shadow-blue-500/25 hover:scale-105 active:scale-95 transition-all flex items-center gap-2">
+            <a href="https://www.linkedin.com/in/husnain-ajmal" target="_blank" rel="noreferrer" className="px-8 py-3.5 rounded-full bg-[#0A66C2] text-white shadow-lg hover:scale-105 active:scale-95 transition-all flex items-center gap-2">
               LinkedIn ↗
             </a>
           </div>
@@ -157,11 +153,11 @@ export default function LoginPage() {
       >
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
-            <div className="bg-gradient-to-br from-indigo-600 to-violet-600 p-3 rounded-2xl shadow-lg shadow-indigo-500/30">
+            <div className="bg-gradient-to-br from-indigo-600 to-violet-600 p-3 rounded-2xl shadow-lg">
               <BookOpen className="w-8 h-8 text-white" />
             </div>
           </div>
-          <h1 className="text-3xl sm:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-600 tracking-tighter drop-shadow-sm mb-2">
+          <h1 className="text-3xl sm:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-600 tracking-tighter mb-2">
             E-Course AI
           </h1>
           <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">
@@ -181,14 +177,34 @@ export default function LoginPage() {
           <AnimatePresence mode="wait" custom={mode === 'signin' ? 1 : -1}>
             <motion.div key={mode} custom={mode === 'signin' ? 1 : -1} variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.3, type: "spring", stiffness: 300, damping: 30 }} className="space-y-4">
               
+              {/* BROWSER AUTOFILL ADDED (name & autoComplete) */}
               <div className="relative group">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
-                <input type="email" placeholder="Email address" value={email} onChange={(e) => setEmail(e.target.value)} required className="w-full pl-12 pr-4 py-3.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all shadow-sm" />
+                <input 
+                  type="email" 
+                  name="email" 
+                  autoComplete="email" 
+                  placeholder="Email address" 
+                  value={email} 
+                  onChange={(e) => setEmail(e.target.value)} 
+                  required 
+                  className="w-full pl-12 pr-4 py-3.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-indigo-500/50 outline-none" 
+                />
               </div>
               
               <div className="relative group">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
-                <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} className="w-full pl-12 pr-4 py-3.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all shadow-sm" />
+                <input 
+                  type="password" 
+                  name="password" 
+                  autoComplete={mode === 'signin' ? 'current-password' : 'new-password'} 
+                  placeholder="Password" 
+                  value={password} 
+                  onChange={(e) => setPassword(e.target.value)} 
+                  required 
+                  minLength={6} 
+                  className="w-full pl-12 pr-4 py-3.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-indigo-500/50 outline-none" 
+                />
               </div>
 
               {/* DYNAMIC CHECKBOXES */}
@@ -197,13 +213,13 @@ export default function LoginPage() {
                   <button type="button" onClick={() => setAgreed(!agreed)} className="flex items-start gap-2 text-left focus:outline-none group">
                     {agreed ? <CheckSquare className="w-5 h-5 text-indigo-600 mt-0.5" /> : <Square className="w-5 h-5 text-slate-400 group-hover:text-indigo-400 mt-0.5 transition-colors" />}
                     <span className="text-xs text-slate-500 dark:text-slate-400 leading-tight">
-                      I agree to the <a href="#" className="text-indigo-600 dark:text-indigo-400 hover:underline">Terms of Service</a> and <a href="#" className="text-indigo-600 dark:text-indigo-400 hover:underline">Privacy Policy</a>.
+                      I agree to the <span className="text-indigo-600 dark:text-indigo-400 hover:underline">Terms of Service</span>.
                     </span>
                   </button>
                 ) : (
                   <button type="button" onClick={() => setRememberMe(!rememberMe)} className="flex items-center gap-2 focus:outline-none group">
                     {rememberMe ? <CheckSquare className="w-5 h-5 text-indigo-600" /> : <Square className="w-5 h-5 text-slate-400 group-hover:text-indigo-400 transition-colors" />}
-                    <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Remember my credentials</span>
+                    <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Keep me logged in</span>
                   </button>
                 )}
               </div>
@@ -211,11 +227,10 @@ export default function LoginPage() {
             </motion.div>
           </AnimatePresence>
 
-          <button type="submit" disabled={loading} className="w-full relative overflow-hidden flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-violet-600 text-white py-4 rounded-xl font-bold text-sm hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 shadow-lg shadow-indigo-500/25 disabled:opacity-70 disabled:hover:scale-100 mt-2">
+          <button type="submit" disabled={loading} className="w-full relative overflow-hidden flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-violet-600 text-white py-4 rounded-xl font-bold text-sm hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 shadow-lg disabled:opacity-70 mt-2">
             <span className="relative z-10 flex items-center gap-2">
               {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (<>{mode === 'signin' ? 'Sign In' : 'Create Account'} <ArrowRight className="w-5 h-5" /></>)}
             </span>
-            <div className="absolute inset-0 h-full w-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-shimmer"></div>
           </button>
         </form>
 
