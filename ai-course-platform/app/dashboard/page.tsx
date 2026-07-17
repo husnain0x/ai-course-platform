@@ -5,7 +5,6 @@ import FileUpload from '@/components/FileUpload'
 import CourseList from '@/components/CourseList'
 import { LogOut, BookOpen } from 'lucide-react'
 import ThemeToggle from '@/components/ThemeToggle'
-import SessionTimeout from '@/components/SessionTimeout'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -16,10 +15,8 @@ export default async function DashboardPage() {
   const { data: courses } = await supabase.from('courses').select('*').eq('user_id', user.id).order('created_at', { ascending: false })
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-violet-50 dark:from-slate-950 dark:via-slate-950 dark:to-slate-950 font-sans transition-colors duration-300">
-      <SessionTimeout />
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-violet-50 dark:from-slate-950 dark:via-slate-950 dark:to-slate-950 font-sans transition-colors duration-300 flex flex-col">
       
-      {/* ✨ NEW: Ultra-clean frosted glass navbar */}
       <nav className="sticky top-0 z-50 w-full bg-white/60 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-800 transition-colors">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -43,7 +40,7 @@ export default async function DashboardPage() {
         </div>
       </nav>
 
-      <main className="max-w-6xl mx-auto px-6 py-12">
+      <main className="max-w-6xl mx-auto px-6 py-12 flex-1 w-full">
         <header className="mb-4">
           <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-slate-900 to-slate-700 dark:from-white dark:to-slate-300 tracking-tight">
             Welcome back!
@@ -53,21 +50,21 @@ export default async function DashboardPage() {
         
         <FileUpload userId={user.id} />
         <CourseList initialCourses={courses || []} />
-
-        {/* Professional Footer */}
-        <footer className="mt-20 pt-10 border-t border-slate-200/50 dark:border-slate-800 text-center pb-8">
-          <div className="flex justify-center gap-6 text-[10px] uppercase tracking-widest font-bold text-slate-500 dark:text-slate-400 mb-6">
-            <a href="https://github.com/husnain0x" target="_blank" rel="noreferrer" className="hover:text-slate-900 dark:hover:text-white hover:-translate-y-0.5 transition-transform">GitHub</a>
-            <a href="https://www.linkedin.com/in/husnain-ajmal" target="_blank" rel="noreferrer" className="hover:text-[#0A66C2] dark:hover:text-blue-400 hover:-translate-y-0.5 transition-transform">LinkedIn</a>
-            <a href="#" className="hover:text-pink-600 dark:hover:text-pink-400 hover:-translate-y-0.5 transition-transform">Instagram</a>
-            <a href="#" className="hover:text-indigo-600 dark:hover:text-indigo-400 hover:-translate-y-0.5 transition-transform">Discord</a>
-            <a href="mailto:Husnain.ajmal999@gmail.com" className="hover:text-yellow-600 dark:hover:text-yellow-400 hover:-translate-y-0.5 transition-transform">Email</a>
-          </div>
-          <p className="text-[11px] font-medium text-slate-400 dark:text-slate-500 opacity-80">
-            © {new Date().getFullYear()} Husnain Ajmal - Robotics & AI Engineer - Built & deployed on Vercel
-          </p>
-        </footer>
       </main>
+
+      {/* NEW PROFESSIONAL FOOTER */}
+      <footer className="mt-auto py-10 border-t border-slate-200/50 dark:border-slate-800 text-center">
+        <div className="flex justify-center gap-6 text-[10px] uppercase tracking-widest font-bold text-slate-500 dark:text-slate-400 mb-6">
+          <a href="https://github.com/husnain0x" target="_blank" rel="noreferrer" className="hover:text-slate-900 dark:hover:text-white hover:-translate-y-0.5 transition-transform">GitHub</a>
+          <a href="https://www.linkedin.com/in/husnain-ajmal" target="_blank" rel="noreferrer" className="hover:text-[#0A66C2] dark:hover:text-blue-400 hover:-translate-y-0.5 transition-transform">LinkedIn</a>
+          <a href="#" className="hover:text-pink-600 dark:hover:text-pink-400 hover:-translate-y-0.5 transition-transform">Instagram</a>
+          <a href="#" className="hover:text-indigo-600 dark:hover:text-indigo-400 hover:-translate-y-0.5 transition-transform">Discord</a>
+          <a href="mailto:Husnain.ajmal999@gmail.com" className="hover:text-yellow-600 dark:hover:text-yellow-400 hover:-translate-y-0.5 transition-transform">Email</a>
+        </div>
+        <p className="text-[11px] font-medium text-slate-400 dark:text-slate-500 opacity-80">
+          © {new Date().getFullYear()} Husnain Ajmal - Robotics & AI Engineer - Built & deployed on Vercel
+        </p>
+      </footer>
     </div>
   )
 }
