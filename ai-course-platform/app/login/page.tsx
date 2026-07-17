@@ -44,7 +44,7 @@ export default function LoginPage() {
       }
     }
     checkSession()
-  }, [router, supabase])
+  }, [])
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault()

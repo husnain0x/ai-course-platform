@@ -61,18 +61,13 @@ export default function CourseViewer({ course, chapters, userId }: any) {
     if (!chatInput.trim() || isChatting) return
     const userMsg = { role: 'user', content: chatInput }; setChatHistory((prev) => [...prev, userMsg]); setChatInput(''); setIsChatting(true)
     
-    // Construct the entire course text for the RAG Vector DB
-    const courseData = chapters.map((c: any) => 
-      `Chapter: ${c.title}\n\n` + c.lessons.map((l: any) => `Lesson: ${l.title}\n${l.content}`).join('\n\n')
-    ).join('\n\n')
-
     try {
-      const response = await fetch('https://ai-course-platform-i10p.onrender.com/api/rag-chat', {
+      const response = await fetch('https://ai-course-platform-i10p.onrender.com/api/chat', {
         method: 'POST', 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           messages: [...chatHistory, userMsg], 
-          course_data: courseData 
+          context: activeLesson.content 
         }),
       })
       const data = await response.json()
