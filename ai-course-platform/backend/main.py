@@ -222,3 +222,63 @@ async def generate_flashcards(request: FlashcardRequest):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Flashcard generation error: {str(e)}")
+
+class TranslateRequest(BaseModel):
+    text: str
+    language: str
+
+@app.post("/api/translate")
+async def translate_text(request: TranslateRequest):
+    try:
+        prompt = f"Translate the following text to {request.language}. Return ONLY the translated text, preserving all Markdown formatting.\n\n{request.text}"
+        response = groq_client.chat.completions.create(
+            messages=[{"role": "user", "content": prompt}],
+            model="llama-3.1-8b-instant",
+            temperature=0.1,
+        )
+        return {"translated_text": response.choices[0].message.content}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/summarize")
+async def summarize_file(file: UploadFile = File(...)):
+    try:
+        file_bytes = await file.read()
+        extension = file.filename.split('.')[-1].lower()
+        
+        if extension == "pdf":
+            doc = fitz.open(stream=file_bytes, filetype="pdf")
+            text = "".join([page.get_text() for page in doc])[:30000]
+        elif extension == "docx":
+            import io
+            from docx import Document
+            document = Document(io.BytesIO(file_bytes))
+            text = "".join([para.text + "\n" for para in document.paragraphs])[:30000]
+        else:
+            raise HTTPException(status_code=400, detail="Unsupported file type for summarization.")
+            
+        prompt = f"Summarize this document. Provide a 2-sentence executive summary, followed by 5 key bullet points.\n\n{text}"
+        response = groq_client.chat.completions.create(
+            messages=[{"role": "user", "content": prompt}],
+            model="llama-3.1-8b-instant",
+            temperature=0.2,
+        )
+        return {"summary": response.choices[0].message.content}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+class DiagramRequest(BaseModel):
+    context: str
+
+@app.post("/api/diagram")
+async def generate_diagram(request: DiagramRequest):
+    try:
+        prompt = f"Create a detailed ASCII-art Mind Map or Diagram representing the core concepts of this text. Use text characters (|, -, +, >) to draw it. Return ONLY the ASCII art inside a markdown code block.\n\n{request.context}"
+        response = groq_client.chat.completions.create(
+            messages=[{"role": "user", "content": prompt}],
+            model="llama-3.1-8b-instant",
+            temperature=0.1,
+        )
+        return {"diagram": response.choices[0].message.content}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

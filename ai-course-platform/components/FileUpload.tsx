@@ -135,19 +135,35 @@ export default function FileUpload({ userId }: { userId: string }) {
             )}
           </div>
 
-          {loading ? (
-          <div className="mt-4 p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl border border-indigo-100 dark:border-indigo-800 animate-pulse">
-            <div className="flex items-center gap-3 text-indigo-600 dark:text-indigo-400 font-bold">
-              <Loader2 className="w-5 h-5 animate-spin" />
-              <span>{status}</span>
+          {/* Action Buttons */}
+          {file && (
+            <div className="mt-4 w-full flex flex-col gap-2">
+              <button 
+                onClick={handleUpload} disabled={loading}
+                className="w-full relative overflow-hidden flex items-center justify-center gap-2 bg-slate-900 dark:bg-indigo-600 text-white py-3.5 rounded-xl hover:bg-indigo-600 dark:hover:bg-indigo-500 transition-all duration-300 disabled:opacity-70 shadow-lg"
+              >
+                {loading && status.includes('course') ? <Loader2 className="w-5 h-5 animate-spin" /> : '✨ Generate Full Course'}
+              </button>
+              
+              <button 
+                onClick={async () => {
+                  setLoading(true); setStatus('Summarizing PDF...');
+                  const formData = new FormData(); formData.append('file', file);
+                  try {
+                    const res = await fetch('https://ai-course-platform-i10p.onrender.com/api/summarize', { method: 'POST', body: formData });
+                    const data = await res.json();
+                    alert("📄 PDF SUMMARY:\n\n" + data.summary); // Simple alert for summary
+                  } catch (e) { alert("Failed to summarize"); }
+                  finally { setLoading(false); setStatus(''); }
+                }} 
+                disabled={loading}
+                className="w-full flex items-center justify-center gap-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 py-3 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-all duration-300 disabled:opacity-70"
+              >
+                {loading && status.includes('Summarizing') ? <Loader2 className="w-5 h-5 animate-spin" /> : '📄 Get Quick Summary'}
+              </button>
+              {status && <p className="text-center text-xs text-indigo-500 mt-2 animate-pulse">{status}</p>}
             </div>
-          </div>
-        ) : file ? (
-          <button onClick={handleUpload} disabled={loading}
-            className="mt-4 w-full flex items-center justify-center gap-2 bg-slate-900 dark:bg-indigo-600 text-white py-3.5 rounded-xl hover:bg-indigo-600 dark:hover:bg-indigo-500 transition-all duration-300 disabled:opacity-70 shadow-lg">
-            ✨ Generate Course Now
-          </button>
-        ) : null}
+          )}
         </div>
       </div>
     </div>

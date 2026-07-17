@@ -144,6 +144,61 @@ export default function CourseViewer({ course, chapters, userId }: any) {
                 </button>
               </div>
 
+              {/* --- NEW ACTION BAR: Language, Export, Diagram --- */}
+              <div className="flex flex-wrap items-center gap-3 mb-8">
+                {/* 1. Multi-Language Dropdown */}
+                <select 
+                  onChange={async (e) => {
+                    const lang = e.target.value;
+                    if (!lang) return;
+                    const res = await fetch('https://ai-course-platform-i10p.onrender.com/api/translate', {
+                      method: 'POST', headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ text: activeLesson.content, language: lang })
+                    });
+                    const data = await res.json();
+                    setActiveLesson({ ...activeLesson, content: data.translated_text });
+                  }}
+                  className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold px-3 py-2 rounded-lg cursor-pointer outline-none"
+                >
+                  <option value="">🌐 Translate Lesson</option>
+                  <option value="Spanish">🇪🇸 Spanish</option>
+                  <option value="French">🇫🇷 French</option>
+                  <option value="German">🇩🇪 German</option>
+                  <option value="Urdu">🇵🇰 Urdu</option>
+                  <option value="Arabic">🇦🇪 Arabic</option>
+                  <option value="Hindi">🇮🇳 Hindi</option>
+                </select>
+
+                {/* 2. Course Export Button */}
+                <button 
+                  onClick={() => {
+                    const blob = new Blob([`# ${activeLesson.title}\n\n${activeLesson.content}`], { type: 'text/markdown' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url; a.download = `${activeLesson.title}.md`; a.click();
+                  }}
+                  className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold px-3 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition"
+                >
+                  💾 Export as Markdown
+                </button>
+
+                {/* 3. AI Mind Map Button */}
+                <button 
+                  onClick={async () => {
+                    const res = await fetch('https://ai-course-platform-i10p.onrender.com/api/diagram', {
+                      method: 'POST', headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ context: activeLesson.content })
+                    });
+                    const data = await res.json();
+                    setActiveLesson({ ...activeLesson, content: activeLesson.content + "\n\n### AI Generated Mind Map\n" + data.diagram });
+                  }}
+                  className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold px-3 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition"
+                >
+                  🗺️ Generate Mind Map
+                </button>
+              </div>
+              {/* --- END ACTION BAR --- */}
+
               <h1 className="text-3xl md:text-5xl font-extrabold text-slate-900 dark:text-white mb-8 tracking-tight">{activeLesson.title}</h1>
               <div className="prose prose-indigo dark:prose-invert prose-lg max-w-none text-slate-700 dark:text-slate-300 whitespace-pre-wrap">
                 <ReactMarkdown>{activeLesson.content}</ReactMarkdown>
