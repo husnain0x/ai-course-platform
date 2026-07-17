@@ -13,27 +13,21 @@ export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [agreed, setAgreed] = useState(false)
-  const [rememberMe, setRememberMe] = useState(true) // Default to true
-  const [loading, setLoading] = useState(true) // Start loading to check session instantly
+  const [rememberMe, setRememberMe] = useState(true)
+  const [loading, setLoading] = useState(false) // <-- Changed to false so the form shows immediately!
   const [error, setError] = useState<string | null>(null)
   
   const router = useRouter()
   const supabase = createClient()
 
-  // --- SAFE AUTO-LOGIN CHECK ---
+  // --- AUTO-FILL EMAIL ONLY (NO REDIRECT LOOP!) ---
   useEffect(() => {
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      
-      if (session) {
-        // Valid session! Redirect instantly!
-        router.push('/dashboard')
-      } else {
-        setLoading(false) // No session, show the login form safely
-      }
+    // Just grab the saved email from the browser if they checked "Remember Me" previously
+    const savedEmail = localStorage.getItem('savedEmail')
+    if (savedEmail) {
+      setEmail(savedEmail)
+      setRememberMe(true)
     }
-    
-    checkSession()
   }, [])
 
   const handleAuth = async (e: React.FormEvent) => {
@@ -54,13 +48,14 @@ export default function LoginPage() {
 
       if (authError) throw authError
       
-      // Save their "Remember Me" preference
-      if (mode === 'signin') {
-        localStorage.setItem('rememberMe', rememberMe ? 'true' : 'false')
+      // Save or remove their email based on the checkbox
+      if (rememberMe) {
+        localStorage.setItem('savedEmail', email)
       } else {
-        localStorage.setItem('rememberMe', 'true') 
+        localStorage.removeItem('savedEmail')
       }
 
+      // Send to dashboard after MANUAL button click
       router.push('/dashboard')
       router.refresh()
     } catch (err: any) {
@@ -83,18 +78,15 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen w-full flex flex-col lg:flex-row items-center justify-center overflow-hidden bg-[#FAFAFA] dark:bg-slate-950 relative font-sans transition-colors duration-500">
       
-      {/* Absolute Theme Toggle */}
       <div className="absolute top-6 right-6 z-50 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md rounded-full border border-slate-200 dark:border-slate-800 shadow-sm p-1">
         <ThemeToggle />
       </div>
 
-      {/* Animated Background Gradients */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-400/30 dark:bg-indigo-600/20 rounded-full blur-[120px] animate-pulse-slow"></div>
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-violet-400/30 dark:bg-violet-600/20 rounded-full blur-[120px] animate-pulse-slow" style={{ animationDelay: '2s' }}></div>
       </div>
 
-      {/* Mobile Branding (Visible only on small screens) */}
       <div className="lg:hidden relative z-20 text-center mb-6 px-6 mt-10">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold tracking-widest uppercase mb-4 border border-indigo-100 dark:border-indigo-800 shadow-sm">
           <span className="w-1.5 h-1.5 rounded-full bg-indigo-600 dark:bg-indigo-400 animate-pulse" />
@@ -105,7 +97,6 @@ export default function LoginPage() {
         </h2>
       </div>
 
-      {/* Hero Branding Section (Desktop Only) */}
       <div className="hidden lg:flex flex-col justify-center absolute left-0 top-0 bottom-0 w-1/2 px-16 xl:px-24 z-20 pointer-events-none">
         <div className="pointer-events-auto">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-xs font-bold tracking-widest uppercase mb-6 border border-indigo-100 dark:border-indigo-800 shadow-sm">
@@ -134,7 +125,6 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* Glassmorphic Login Card */}
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -167,7 +157,6 @@ export default function LoginPage() {
           <AnimatePresence mode="wait" custom={mode === 'signin' ? 1 : -1}>
             <motion.div key={mode} custom={mode === 'signin' ? 1 : -1} variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.3, type: "spring", stiffness: 300, damping: 30 }} className="space-y-4">
               
-              {/* BROWSER AUTOFILL ADDED (name & autoComplete) */}
               <div className="relative group">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
                 <input 
@@ -197,23 +186,21 @@ export default function LoginPage() {
                 />
               </div>
 
-              {/* DYNAMIC CHECKBOXES */}
               <div className="pt-2 flex items-center">
                 {mode === 'signup' ? (
                   <button type="button" onClick={() => setAgreed(!agreed)} className="flex items-start gap-2 text-left focus:outline-none group">
-                    {agreed ? <CheckSquare className="w-5 h-5 text-indigo-600 mt-0.5" /> : <Square className="w-5 h-5 text-slate-400 group-hover:text-indigo-400 mt-0.5 transition-colors" />}
-                    <span className="text-xs text-slate-500 dark:text-slate-400 leading-tight">
+                    {agreed ? <CheckSquare className="w-5 h-5 text-indigo-600 mt-0.5" /> : <Square className="w-5 h-5 text-slate-400 mt-0.5" />}
+                    <span className="text-xs text-slate-500 dark:text-slate-400">
                       I agree to the <span className="text-indigo-600 dark:text-indigo-400 hover:underline">Terms of Service</span>.
                     </span>
                   </button>
                 ) : (
                   <button type="button" onClick={() => setRememberMe(!rememberMe)} className="flex items-center gap-2 focus:outline-none group">
                     {rememberMe ? <CheckSquare className="w-5 h-5 text-indigo-600" /> : <Square className="w-5 h-5 text-slate-400 group-hover:text-indigo-400 transition-colors" />}
-                    <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Keep me logged in</span>
+                    <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Remember my email</span>
                   </button>
                 )}
               </div>
-
             </motion.div>
           </AnimatePresence>
 
